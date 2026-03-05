@@ -55,6 +55,10 @@ import com.marianaalra.booklog.ui.theme.VistaTheme
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MainScreenWithDrawer() {
+
+    onNavigateToReading: (String) -> Unit = {},
+    onNavigateToNotes: (String) -> Unit = {},
+    onLogout: () -> Unit = {}
     val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
     val scope = rememberCoroutineScope()
     var selectedItem by remember { mutableStateOf("Biblioteca") }
@@ -163,6 +167,7 @@ fun MainScreenWithDrawer() {
                     selected = false,
                     onClick = {
                         scope.launch { drawerState.close() }
+                        onLogout()
                     },
                     modifier = Modifier.padding(NavigationDrawerItemDefaults.ItemPadding)
                 )
@@ -239,7 +244,11 @@ fun MainScreenWithDrawer() {
                 Spacer(modifier = Modifier.height(16.dp))
 
                 //AQUÍ LLAMAS A TU VISTA GENÉRICA Y LE PASAS LA LISTA FILTRADA
-                BookListSection(booksToShow = filteredBooks)
+                BookListSection(
+                    booksToShow = filteredBooks,
+                    onNavigateToReading = onNavigateToReading,
+                    onNavigateToNotes = onNavigateToNotes,
+                           )
             }
         }
     }

@@ -51,6 +51,8 @@ fun BookCard(
     fileFormat: String,
     progress: Float,
     status: String,
+    onOpenReading = { onNavigateToReading(book.title) }, // 👈 Conectado!
+    onNotesClick = { onNavigateToNotes(book.title) },
     onOpenReading: () -> Unit,
     onNotesClick: () -> Unit,
     onEditClick: () -> Unit,
