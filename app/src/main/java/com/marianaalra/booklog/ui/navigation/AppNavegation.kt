@@ -6,7 +6,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.marianaalra.booklog.ui.feature.auth.LoginScreen
 import com.marianaalra.booklog.ui.feature.library.MainScreenWithDrawer
-import com.marianaalra.booklog.ui.feature.notes.NotesQuotesScreen
+import com.marianaalra.booklog.ui.feature.notes.NotesAndQuotesScreen
 import com.marianaalra.booklog.ui.feature.reading.ReadingScreen
 
 @Composable
@@ -59,7 +59,7 @@ fun AppNavigation() {
         // 4. PANTALLA DE NOTAS Y CITAS
         composable(Screen.Notes.route) { backStackEntry ->
             val title = backStackEntry.arguments?.getString("bookTitle") ?: "Libro"
-            NotesQuotesScreen(
+            NotesAndQuotesScreen(
                 bookTitle = title,
                 notes = emptyList(), // Lista temporal
                 quotes = emptyList(), // Lista temporal
