@@ -9,6 +9,7 @@ import com.marianaalra.booklog.ui.feature.auth.RegisterScreen
 import com.marianaalra.booklog.ui.feature.library.MainScreenWithDrawer
 import com.marianaalra.booklog.ui.feature.notes.NotesAndQuotesScreen
 import com.marianaalra.booklog.ui.feature.reading.ReadingScreen
+import java.net.URLDecoder
 
 @Composable
 fun AppNavigation() {
@@ -62,14 +63,16 @@ fun AppNavigation() {
 
         // --- 4. PANTALLA DE LECTURA ---
         composable(Screen.Reading.route) { backStackEntry ->
-            val title = backStackEntry.arguments?.getString("bookTitle") ?: "Libro"
-            // Extraemos la ruta del archivo que viene en la URL
+            // Extraemos los textos protegidos y los regresamos a la normalidad
+            val rawTitle = backStackEntry.arguments?.getString("bookTitle") ?: "Libro"
+            val title = URLDecoder.decode(rawTitle, "UTF-8")
+
             val encodedUri = backStackEntry.arguments?.getString("fileUri")
-            val fileUri = if (encodedUri.isNullOrEmpty()) null else android.net.Uri.decode(encodedUri)
+            val fileUri = if (encodedUri.isNullOrEmpty()) null else URLDecoder.decode(encodedUri, "UTF-8")
 
             ReadingScreen(
                 bookTitle = title,
-                fileUriString = fileUri, // 👈 ¡ESTO ARREGLA EL ERROR ROJO!
+                fileUriString = fileUri, // ¡Ahora sí recibe la ruta intacta!
                 initialProgress = 0f,
                 onNavigateBack = { navController.popBackStack() },
                 onAddNote = { },
