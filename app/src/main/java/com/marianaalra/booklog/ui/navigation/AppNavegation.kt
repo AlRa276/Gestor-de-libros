@@ -5,6 +5,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.marianaalra.booklog.ui.feature.auth.LoginScreen
+import com.marianaalra.booklog.ui.feature.auth.RegisterScreen
 import com.marianaalra.booklog.ui.feature.library.MainScreenWithDrawer
 import com.marianaalra.booklog.ui.feature.notes.NotesAndQuotesScreen
 import com.marianaalra.booklog.ui.feature.reading.ReadingScreen
@@ -27,7 +28,21 @@ fun AppNavigation() {
                 onNavigateToRegister = { navController.navigate(Screen.Register.route) }
             )
         }
-
+        //PANTALLA DE REGISTRO
+        composable(Screen.Register.route) {
+            RegisterScreen(
+                onRegisterClick = { username, email, password ->
+                    // Simulamos que al registrarse entra directo a la app
+                    navController.navigate(Screen.Home.route) {
+                        popUpTo(Screen.Login.route) { inclusive = true }
+                    }
+                },
+                onNavigateToLogin = {
+                    // Esto hace que el botón de "Ya tengo cuenta" te regrese al Login
+                    navController.popBackStack()
+                }
+            )
+        }
         // 2. PANTALLA PRINCIPAL (BIBLIOTECA)
         composable(Screen.Home.route) {
             MainScreenWithDrawer(
