@@ -1,0 +1,30 @@
+-- Tabla Principal Readings
+CREATE TABLE IF NOT EXISTS readings (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    filePath TEXT NOT NULL,
+    fileName TEXT NOT NULL,
+    status TEXT CHECK(status IN ('PENDIENTE', 'EN_PROGRESO', 'FINALIZADA')) DEFAULT 'PENDIENTE',
+    createdAt INTEGER NOT NULL,
+    updatedAt INTEGER NOT NULL
+);
+
+-- Tabla Notes
+CREATE TABLE IF NOT EXISTS notes (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    readingId INTEGER NOT NULL,
+    content TEXT NOT NULL,
+    pageReference TEXT,
+    createdAt INTEGER NOT NULL,
+    FOREIGN KEY (readingId) REFERENCES readings (id) ON DELETE CASCADE
+);
+
+-- Tabla Quotes
+CREATE TABLE IF NOT EXISTS quotes (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    readingId INTEGER NOT NULL,
+    quotedText TEXT NOT NULL,
+    pageReference TEXT,
+    comment TEXT,
+    createdAt INTEGER NOT NULL,
+    FOREIGN KEY (readingId) REFERENCES readings (id) ON DELETE CASCADE
+);

@@ -1,0 +1,55 @@
+Nombre del proyecto:
+BookLog
+
+Este es un proyecto de Android desarrollado en Kotlin con Jetpack Compose.
+Siempre utiliza Room Database para la persistencia local.
+este proyacto usara SQLite para modelar la base de datos.
+
+Objetios del proyecto:
+Objetivos específicos: 
+•	Permitir la selección y organización de archivos de lectura desde el dispositivo móvil.
+•	Registrar notas y citas asociadas a un archivo específico.
+•	Guardar referencias de página para cada nota o cita.
+•	Clasificar las lecturas según su estado (pendiente, en progreso o finalizada).
+•	Mostrar un historial de lecturas registradas.
+
+
+	Descripción.
+•	Gestor de archivos de lectura.
+•	Diario de lectura digital con:
+o	Notas personalizadas.
+o	Citas textuales.
+o	Referencias de página.
+o	Reflexiones académicas.
+•	Organización de lecturas por estado.
+•	Almacenamiento local de la información.
+•	Interfaz de usuario sencilla basada en Material Design.
+
+Alcances.
+Primera versión.
+•	Selección de archivos de lectura desde el dispositivo.
+•	Registro y visualización de lecturas.
+•	Creación, edición y eliminación de notas y citas.
+•	Asociación de notas y citas con páginas específicas.
+•	Clasificación básica de lecturas.
+•	Persistencia de datos mediante almacenamiento local.
+•	Navegación básica entre pantallas.
+
+Segunda etapa:
+•	Filtros y búsqueda de lecturas.
+•	Gestión avanzada de notas y citas.
+•	Estadísticas simples (lecturas realizadas y en progreso).
+
+Tercera etapa:
+•	Exportación del diario de lectura en formato PDF o texto.
+•	Gráficas básicas de progreso de lectura.
+•	Modo oscuro.
+•	Organización por categorías o etiquetas.
+
+No contara con:
+•	Edición del contenido de los archivos.
+•	Visualización avanzada de documentos PDF (anotaciones, subrayado, edición directa).
+•	Sincronización en la nube.
+•	Gestión de múltiples usuarios.
+•	Funcionalidades sociales o colaborativas.
+
