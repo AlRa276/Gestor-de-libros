@@ -1,10 +1,9 @@
 package com.marianaalra.booklog.ui.feature.library
 
+import android.content.Intent
 import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.activity.compose.rememberLauncherForActivityResult
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -13,6 +12,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.outlined.Book
@@ -25,6 +25,7 @@ import androidx.compose.material.icons.outlined.MenuBook
 import androidx.compose.material.icons.outlined.Person
 import androidx.compose.material3.DrawerValue
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -40,6 +41,8 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.rememberDrawerState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -49,13 +52,10 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.launch
-
-// 👇 Asegúrate de que estas dos líneas apunten correctamente a tus archivos
+import androidx.compose.ui.platform.LocalContext
 import com.marianaalra.booklog.domain.model.Book
 import com.marianaalra.booklog.ui.components.BookListSection
 import com.marianaalra.booklog.ui.theme.VistaTheme
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateListOf
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -64,12 +64,11 @@ fun MainScreenWithDrawer(
     onNavigateToNotes: (String) -> Unit = {},
     onLogout: () -> Unit = {}
 ) {
-
-// 1. Primero defines los estados del Drawer y Corrutinas
     val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
     val scope = rememberCoroutineScope()
     var selectedItem by remember { mutableStateOf("Biblioteca") }
     var searchQuery by remember { mutableStateOf("") }
+    val context = LocalContext.current
 
     // --- AQUÍ SIMULAMOS TU BASE DE DATOS (Lista Maestra) ---
     val allBooks = remember {
@@ -81,11 +80,17 @@ fun MainScreenWithDrawer(
             Book("Metodologías de Desarrollo de Software", "epub", 0.80f, "EN_PROGRESO")
         )
     }
-    // 2. Aquí es donde va el código que mencionas (antes del Scaffold)
+
     val filePickerLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.OpenDocument(),
         onResult = { uri: Uri? ->
             if (uri != null) {
+                try {
+                    val takeFlags: Int = Intent.FLAG_GRANT_READ_URI_PERMISSION
+                    context.contentResolver.takePersistableUriPermission(uri, takeFlags)
+                } catch (e: Exception) {
+                    e.printStackTrace()
+                }
                 val isEpub = uri.toString().contains("epub", ignoreCase = true)
                 val format = if (isEpub) "epub" else "pdf"
                 val tempName = uri.path?.substringAfterLast("/")?.substringBeforeLast(".") ?: "Nuevo Documento"
@@ -102,6 +107,7 @@ fun MainScreenWithDrawer(
             }
         }
     )
+
     ModalNavigationDrawer(
         drawerState = drawerState,
         drawerContent = {
@@ -110,16 +116,13 @@ fun MainScreenWithDrawer(
 
                 Text(
                     text = "BookLog",
-                    modifier = Modifier
-                        .padding(horizontal = 28
-                            .dp, vertical = 16.dp),
+                    modifier = Modifier.padding(horizontal = 28.dp, vertical = 16.dp),
                     style = MaterialTheme.typography.titleLarge,
                     color = MaterialTheme.colorScheme.primary
                 )
 
                 HorizontalDivider(modifier = Modifier.padding(horizontal = 28.dp, vertical = 8.dp))
 
-                // --- SECCIÓN: ESTADOS DE LECTURA ---
                 NavigationDrawerItem(
                     icon = { Icon(Icons.Outlined.Book, contentDescription = null) },
                     label = { Text("Biblioteca") },
@@ -163,7 +166,6 @@ fun MainScreenWithDrawer(
 
                 HorizontalDivider(modifier = Modifier.padding(horizontal = 28.dp, vertical = 8.dp))
 
-                // --- SECCIÓN: ORGANIZACIÓN ---
                 NavigationDrawerItem(
                     icon = { Icon(Icons.Outlined.LibraryBooks, contentDescription = null) },
                     label = { Text("Series") },
@@ -197,7 +199,6 @@ fun MainScreenWithDrawer(
 
                 Spacer(modifier = Modifier.weight(1f))
 
-                // --- SECCIÓN: CUENTA ---
                 HorizontalDivider(modifier = Modifier.padding(horizontal = 28.dp, vertical = 8.dp))
                 NavigationDrawerItem(
                     icon = { Icon(Icons.Outlined.Logout, contentDescription = null) },
@@ -214,17 +215,14 @@ fun MainScreenWithDrawer(
         }
     ) {
 
-
-        // --- AQUÍ APLICAMOS LA MAGIA DEL FILTRO ---
         val filteredBooks = when (selectedItem) {
-            "Biblioteca" -> allBooks // Muestra todos
+            "Biblioteca" -> allBooks
             "Pendientes" -> allBooks.filter { it.status == "PENDIENTE" }
             "En progreso" -> allBooks.filter { it.status == "EN_PROGRESO" }
             "Finalizadas" -> allBooks.filter { it.status == "FINALIZADA" }
-            else -> emptyList() // Para autores, etiquetas, etc., por ahora vacío
+            else -> emptyList()
         }
 
-        // --- CONTENIDO PRINCIPAL ---
         Scaffold(
             topBar = {
                 TopAppBar(
@@ -254,6 +252,18 @@ fun MainScreenWithDrawer(
                         }
                     }
                 )
+            },
+            // 👇 AQUÍ ESTÁ EL BOTÓN FLOTANTE QUE FALTABA
+            floatingActionButton = {
+                FloatingActionButton(
+                    onClick = {
+                        filePickerLauncher.launch(arrayOf("application/pdf", "application/epub+zip"))
+                    },
+                    containerColor = MaterialTheme.colorScheme.primary,
+                    contentColor = MaterialTheme.colorScheme.onPrimary
+                ) {
+                    Icon(Icons.Default.Add, contentDescription = "Agregar nuevo libro")
+                }
             }
         ) { paddingValues ->
             Column(
@@ -272,12 +282,11 @@ fun MainScreenWithDrawer(
 
                 Spacer(modifier = Modifier.height(16.dp))
 
-                //AQUÍ LLAMAS A TU VISTA GENÉRICA Y LE PASAS LA LISTA FILTRADA
                 BookListSection(
                     booksToShow = filteredBooks,
                     onNavigateToReading = onNavigateToReading,
                     onNavigateToNotes = onNavigateToNotes,
-                           )
+                )
             }
         }
     }
@@ -286,8 +295,7 @@ fun MainScreenWithDrawer(
 @Preview(showBackground = true, showSystemUi = true)
 @Composable
 private fun MainScreenWithDrawerPreview() {
-    VistaTheme{
+    VistaTheme {
         MainScreenWithDrawer()
     }
-
 }
