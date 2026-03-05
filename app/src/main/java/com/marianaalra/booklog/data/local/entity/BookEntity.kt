@@ -23,6 +23,7 @@ data class BookEntity(
     val rutaArchivo: String,
     val nombreArchivo: String,
     val titulo: String,
+    val formato: String,
     val autor: String?,
     val progreso: Float = 0f, // 👈 El que agregamos para tu Slider
     val estado: String = "PENDIENTE",

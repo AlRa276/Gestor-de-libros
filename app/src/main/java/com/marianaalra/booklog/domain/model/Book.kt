@@ -8,8 +8,8 @@ data class Book(
     val progress: Float = 0f,
     val status: String = "PENDIENTE",
     val author: String? = null,
-    val fileUri: String? = null, // 👈 NUEVO: Guardará la ruta del archivo
-    val nombreArchivo: String? = null,
+    val fileUri: String, // 👈 NUEVO: Guardará la ruta del archivo
+    val nombreArchivo: String,
     val coverPath: String? = null,
     val fechaCreacion: Long = System.currentTimeMillis()
 )
