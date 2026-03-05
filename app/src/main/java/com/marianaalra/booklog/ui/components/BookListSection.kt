@@ -16,6 +16,8 @@ import com.marianaalra.booklog.domain.model.Book
 @Composable
 fun BookListSection(
     booksToShow: List<Book>, // 👈 Recibe la lista dinámica
+    onNavigateToReading: (String) -> Unit = {},
+    onNavigateToNotes: (String) -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     LazyColumn(
@@ -30,8 +32,8 @@ fun BookListSection(
                 status = book.status,
                 // Asignamos un color por defecto o podrías agregarlo a tu data class
                 coverColor = Color(0xFFBCAAA4),
-                onOpenReading = { },
-                onNotesClick = { },
+                onOpenReading = { onNavigateToReading(book.title) },
+                onNotesClick = { onNavigateToNotes(book.title) },
                 onEditClick = { },
                 onStatusChange = { }
             )
