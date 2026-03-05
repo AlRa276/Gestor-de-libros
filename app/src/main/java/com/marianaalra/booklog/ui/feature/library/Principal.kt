@@ -54,11 +54,13 @@ import com.marianaalra.booklog.ui.theme.VistaTheme
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun MainScreenWithDrawer() {
-
+fun MainScreenWithDrawer(
     onNavigateToReading: (String) -> Unit = {},
     onNavigateToNotes: (String) -> Unit = {},
     onLogout: () -> Unit = {}
+) {
+
+
     val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
     val scope = rememberCoroutineScope()
     var selectedItem by remember { mutableStateOf("Biblioteca") }
