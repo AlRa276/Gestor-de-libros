@@ -2,7 +2,7 @@ package com.marianaalra.booklog.domain.model
 
 data class Book(
     val id: Long = 0, // Necesario para la base de datos
-    val usuarioId: Long,
+    val usuarioId: Long = 0,
     val title: String,
     val fileFormat: String,
     val progress: Float = 0f,

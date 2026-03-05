@@ -68,6 +68,7 @@ CREATE TABLE IF NOT EXISTS lecturas (
     nombreArchivo TEXT NOT NULL,
     titulo TEXT NOT NULL,
     autor TEXT,
+    progreso FLOAT,
     serieId INTEGER,
     estado TEXT CHECK(estado IN ('PENDIENTE', 'EN_PROGRESO', 'FINALIZADA')) DEFAULT 'PENDIENTE',
     fechaCreacion INTEGER NOT NULL,

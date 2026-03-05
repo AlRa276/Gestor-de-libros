@@ -75,11 +75,11 @@ fun MainScreenWithDrawer(
     // --- AQUÍ SIMULAMOS TU BASE DE DATOS (Lista Maestra) ---
     val allBooks = remember {
         mutableStateListOf(
-            Book("Diseño de Interfaces de Usuario", "pdf", 0.45f, "EN_PROGRESO"),
-            Book("Estructuras de Datos y Algoritmos", "epub", 0.0f, "PENDIENTE"),
-            Book("Análisis de Sistemas Complejos", "pdf", 1.0f, "FINALIZADA"),
-            Book("Cálculo Multivariable", "pdf", 0.0f, "PENDIENTE"),
-            Book("Metodologías de Desarrollo de Software", "epub", 0.80f, "EN_PROGRESO")
+            Book(title = "Diseño de Interfaces de Usuario", fileFormat = "pdf", progress = 0.45f, status = "EN_PROGRESO"),
+            Book(title = "Estructuras de Datos y Algoritmos", fileFormat = "epub", progress = 0.0f, status = "PENDIENTE"),
+            Book(title = "Análisis de Sistemas Complejos", fileFormat = "pdf", progress = 1.0f, status = "FINALIZADA"),
+            Book(title = "Cálculo Multivariable", fileFormat = "pdf", progress = 0.0f, status = "PENDIENTE"),
+            Book(title = "Metodologías de Desarrollo de Software", fileFormat = "epub", progress = 0.80f, status = "EN_PROGRESO")
         )
     }
 

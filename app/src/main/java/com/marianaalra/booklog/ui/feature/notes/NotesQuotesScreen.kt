@@ -146,12 +146,12 @@ fun EmptyStateMessage(message: String) {
 @Composable
 private fun NotesAndQuotesScreenPreview() {
     val dummyNotes = listOf(
-        NoteDomain(1, "Repasar el concepto de cohesión y acoplamiento para el examen.", "45", "04 Mar 2026"),
-        NoteDomain(2, "El autor menciona que los diagramas UML son opcionales pero recomendados.", "112", "04 Mar 2026")
+        NoteDomain(id = 1, bookId = 0L, contenido = "Repasar el concepto de cohesión y acoplamiento para el examen.", referenciaPagina = "45"),
+        NoteDomain(id = 2, bookId = 0L, contenido = "El autor menciona que los diagramas UML son opcionales pero recomendados.", referenciaPagina = "112")
     )
     val dummyQuotes = listOf(
-        QuoteDomain(1, "La simplicidad es el alma de la eficiencia.", "Me encantó esta frase para la introducción de mi ensayo.", "22", "04 Mar 2026"),
-        QuoteDomain(2, "Cualquier tonto puede escribir código que un ordenador entienda. Los buenos programadores escriben código que los humanos puedan entender.", null, "89", "04 Mar 2026")
+        QuoteDomain(id = 1, bookId = 0L, textoCitado = "La simplicidad es el alma de la eficiencia.", comentario = "Me encantó esta frase.", referenciaPagina = "22"),
+        QuoteDomain(id = 2, bookId = 0L, textoCitado = "Cualquier tonto puede escribir código que un ordenador entienda.", comentario = null, referenciaPagina = "89")
     )
 
     VistaTheme {
@@ -160,10 +160,9 @@ private fun NotesAndQuotesScreenPreview() {
             notes = dummyNotes,
             quotes = dummyQuotes,
             onNavigateBack = {},
-            onEditNote = {},
-            onDeleteNote = {},
-            onEditQuote = {},
-            onDeleteQuote = {}
+            onEditNote = {}, onDeleteNote = {},
+            onEditQuote = {}, onDeleteQuote = {}
         )
     }
 }
+//Nota que fechaFormat ya no se pasa porque ahora es una propiedad calculada del modelo, no un parámetro del constructor.
