@@ -2,6 +2,7 @@
 package com.marianaalra.booklog.ui.navigation
 
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.platform.LocalContext
@@ -20,6 +21,12 @@ import com.marianaalra.booklog.ui.viewmodel.BookViewModel
 import com.marianaalra.booklog.ui.viewmodel.NotesViewModel
 import com.marianaalra.booklog.ui.viewmodel.ViewModelFactory
 import java.net.URLDecoder
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.ui.unit.dp
 
 @Composable
 fun AppNavigation() {
@@ -104,6 +111,12 @@ fun AppNavigation() {
 
             val books by bookViewModel.books.collectAsState()
             val currentBook = books.find { it.id == bookId }  // 👈 NUEVO
+            val currentUser by authViewModel.currentUser.collectAsState()
+            LaunchedEffect(currentUser?.id) {
+                currentUser?.id?.let { userId ->
+                    if (userId != 0L) bookViewModel.loadBooks(userId)
+                }
+            }
 
             ReadingScreen(
                 bookTitle = title,
@@ -125,9 +138,106 @@ fun AppNavigation() {
             val notes by notesViewModel.notes.collectAsState()
             val quotes by notesViewModel.quotes.collectAsState()
 
-            // Cargamos los datos de este libro específico
+            // Estado para los diálogos de edición
+            val noteToEditState = remember { mutableStateOf<com.marianaalra.booklog.domain.model.NoteDomain?>(null) }
+            val quoteToEditState = remember { mutableStateOf<com.marianaalra.booklog.domain.model.QuoteDomain?>(null) }
+
             androidx.compose.runtime.LaunchedEffect(bookId) {
                 notesViewModel.loadNotesAndQuotes(bookId)
+            }
+
+            // Diálogo editar nota
+            noteToEditState.value?.let { note ->
+                val editedContentState = remember { mutableStateOf(note.contenido) }
+                val editedPageState = remember { mutableStateOf(note.referenciaPagina ?: "") }
+                androidx.compose.material3.AlertDialog(
+                    onDismissRequest = { noteToEditState.value = null },
+                    title = { androidx.compose.material3.Text("Editar nota") },
+                    text = {
+                        androidx.compose.foundation.layout.Column(
+                            verticalArrangement = androidx.compose.foundation.layout.Arrangement.spacedBy(8.dp)
+                        ) {
+                            androidx.compose.material3.OutlinedTextField(
+                                value = editedContentState.value,
+                                onValueChange = { editedContentState.value = it },
+                                label = { androidx.compose.material3.Text("Contenido") },
+                                modifier = androidx.compose.ui.Modifier.fillMaxWidth().height(120.dp),
+                                maxLines = 5
+                            )
+                            androidx.compose.material3.OutlinedTextField(
+                                value = editedPageState.value,
+                                onValueChange = { editedPageState.value = it },
+                                label = { androidx.compose.material3.Text("Página (opcional)") },
+                                modifier = androidx.compose.ui.Modifier.fillMaxWidth()
+                            )
+                        }
+                    },
+                    confirmButton = {
+                        androidx.compose.material3.Button(onClick = {
+                            notesViewModel.updateNote(note.copy(
+                                contenido = editedContentState.value,
+                                referenciaPagina = editedPageState.value.ifBlank { null }
+                            ))
+                            noteToEditState.value = null
+                        }) { androidx.compose.material3.Text("Guardar") }
+                    },
+                    dismissButton = {
+                        androidx.compose.material3.TextButton(onClick = { noteToEditState.value = null }) {
+                            androidx.compose.material3.Text("Cancelar")
+                        }
+                    }
+                )
+            }
+
+            // Diálogo editar cita
+            quoteToEditState.value?.let { quote ->
+                val editedTextState = remember { mutableStateOf(quote.textoCitado) }
+                val editedCommentState = remember { mutableStateOf(quote.comentario ?: "") }
+                val editedPageState = remember { mutableStateOf(quote.referenciaPagina ?: "") }
+                androidx.compose.material3.AlertDialog(
+                    onDismissRequest = { quoteToEditState.value = null },
+                    title = { androidx.compose.material3.Text("Editar cita") },
+                    text = {
+                        androidx.compose.foundation.layout.Column(
+                            verticalArrangement = androidx.compose.foundation.layout.Arrangement.spacedBy(8.dp)
+                        ) {
+                            androidx.compose.material3.OutlinedTextField(
+                                value = editedTextState.value,
+                                onValueChange = { editedTextState.value = it },
+                                label = { androidx.compose.material3.Text("Texto citado") },
+                                modifier = androidx.compose.ui.Modifier.fillMaxWidth().height(100.dp),
+                                maxLines = 4
+                            )
+                            androidx.compose.material3.OutlinedTextField(
+                                value = editedCommentState.value,
+                                onValueChange = { editedCommentState.value = it },
+                                label = { androidx.compose.material3.Text("Comentario (opcional)") },
+                                modifier = androidx.compose.ui.Modifier.fillMaxWidth()
+                            )
+                            androidx.compose.material3.OutlinedTextField(
+                                value = editedPageState.value,
+                                onValueChange = { editedPageState.value = it },
+                                label = { androidx.compose.material3.Text("Página (opcional)") },
+                                modifier = androidx.compose.ui.Modifier.fillMaxWidth()
+                            )
+                        }
+                    },
+                    confirmButton = {
+                        androidx.compose.material3.Button(onClick = {
+                            notesViewModel.updateQuote(quote.copy(
+                                textoCitado = editedTextState.value,
+                                comentario = editedCommentState.value.ifBlank { null },
+                                referenciaPagina = editedPageState.value.ifBlank { null }
+                            ))
+                            quoteToEditState.value = null
+                        }) { androidx.compose.material3.Text("Guardar") }
+                    },
+                    dismissButton = {
+                        androidx.compose.material3.TextButton(onClick = { quoteToEditState.value = null }) {
+                            androidx.compose.material3.Text("Cancelar")
+                        }
+                    }
+                )
             }
 
             NotesAndQuotesScreen(
@@ -135,9 +245,9 @@ fun AppNavigation() {
                 notes = notes,
                 quotes = quotes,
                 onNavigateBack = { navController.popBackStack() },
-                onEditNote = { /* TODO */ },
+                onEditNote = { noteToEditState.value = it },
                 onDeleteNote = { notesViewModel.deleteNote(it) },
-                onEditQuote = { /* TODO */ },
+                onEditQuote = { quoteToEditState.value = it },
                 onDeleteQuote = { notesViewModel.deleteQuote(it) }
             )
         }

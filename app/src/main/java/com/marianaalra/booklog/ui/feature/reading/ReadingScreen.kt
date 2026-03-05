@@ -80,6 +80,11 @@ fun ReadingScreen(
 ) {
     var currentProgress by remember { mutableFloatStateOf(initialProgress) }
     var sliderProgress by remember { mutableFloatStateOf(initialProgress) }
+    LaunchedEffect(currentBook?.progress) {
+        currentBook?.progress?.let { savedProgress ->
+            sliderProgress = savedProgress
+        }
+    }
     // Estados para los diálogos
     var showNoteDialog by remember { mutableStateOf(false) }
     var showQuoteDialog by remember { mutableStateOf(false) }
