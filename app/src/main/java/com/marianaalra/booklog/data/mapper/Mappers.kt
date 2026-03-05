@@ -12,12 +12,12 @@ import com.marianaalra.booklog.domain.model.UserDomain
 // --- TRADUCTORES DE LIBROS ---
 fun BookEntity.toDomain(): Book = Book(
     id = id, usuarioId = usuarioId, fileUri = rutaArchivo, nombreArchivo = nombreArchivo,
-    title = titulo, fileFormat = formato, author = autor, progress = progreso, status = estado, fechaCreacion = fechaCreacion
+    title = titulo, fileFormat = formato, author = autor, progress = progreso, status = estado,coverPath = coverPath, fechaCreacion = fechaCreacion
 )
 
 fun Book.toEntity(): BookEntity = BookEntity(
     id = id, usuarioId = usuarioId, rutaArchivo = fileUri, nombreArchivo = nombreArchivo,
-    titulo = title, formato = fileFormat, autor = author, progreso = progress, estado = status, fechaCreacion = fechaCreacion
+    titulo = title, formato = fileFormat, autor = author, progreso = progress, estado = status,coverPath = coverPath, fechaCreacion = fechaCreacion
 )
 
 // --- TRADUCTORES DE NOTAS ---

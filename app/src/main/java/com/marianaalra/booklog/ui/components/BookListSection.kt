@@ -18,6 +18,7 @@ fun BookListSection(
     booksToShow: List<Book>, // 👈 Recibe la lista dinámica
     onNavigateToReading: (String, String?) -> Unit = { _, _ -> },
     onNavigateToNotes: (String) -> Unit = {},
+    onStatusChange: (Book, String) -> Unit = { _, _ -> },
     modifier: Modifier = Modifier
 ) {
     LazyColumn(
@@ -39,7 +40,9 @@ fun BookListSection(
                 },
                 onNotesClick = { onNavigateToNotes(book.title) },
                 onEditClick = { },
-                onStatusChange = { }
+                onStatusChange = { newStatus ->
+                    onStatusChange(book, newStatus)  // 👈 NUEVO
+                }
             )
         }
 

@@ -69,11 +69,20 @@ fun AppNavigation() {
 
         composable(Screen.Home.route) {
             val currentUser by authViewModel.currentUser.collectAsState()
+            if (currentUser == null) {
+                androidx.compose.runtime.LaunchedEffect(Unit) {
+                    navController.navigate(Screen.Login.route) {
+                        popUpTo(0) { inclusive = true }
+                    }
+                }
+                return@composable
+            }
             MainScreenWithDrawer(
                 bookViewModel = bookViewModel,
-                usuarioId = currentUser?.id ?: 0L,
+                usuarioId = currentUser!!.id,
                 onNavigateToReading = { bookTitle, fileUri ->
-                    navController.navigate(Screen.Reading.createRoute(bookTitle, fileUri))
+                    val book = bookViewModel.books.value.find { it.title == bookTitle }
+                    navController.navigate(Screen.Reading.createRoute(bookTitle, book?.id ?: 0L, fileUri))
                 },
                 onNavigateToNotes = { bookTitle, bookId ->
                     navController.navigate(Screen.Notes.createRoute(bookTitle, bookId))
@@ -91,17 +100,24 @@ fun AppNavigation() {
             val title = URLDecoder.decode(rawTitle, "UTF-8")
             val encodedUri = backStackEntry.arguments?.getString("fileUri")
             val fileUri = if (encodedUri.isNullOrEmpty()) null else URLDecoder.decode(encodedUri, "UTF-8")
+            val bookId = backStackEntry.arguments?.getString("bookId")?.toLongOrNull() ?: 0L
+
+            val books by bookViewModel.books.collectAsState()
+            val currentBook = books.find { it.id == bookId }  // 👈 NUEVO
 
             ReadingScreen(
                 bookTitle = title,
                 fileUriString = fileUri,
-                initialProgress = 0f,
+                bookId = bookId,
+                currentBook = currentBook,              // 👈 NUEVO
+                notesViewModel = notesViewModel,
+                bookViewModel = bookViewModel,          // 👈 NUEVO
+                initialProgress = currentBook?.progress ?: 0f,  // 👈 Carga el progreso real
                 onNavigateBack = { navController.popBackStack() },
                 onAddNote = { },
                 onAddCitation = { }
             )
         }
-
         composable(Screen.Notes.route) { backStackEntry ->
             val title = backStackEntry.arguments?.getString("bookTitle") ?: "Libro"
             val bookId = backStackEntry.arguments?.getString("bookId")?.toLongOrNull() ?: 0L

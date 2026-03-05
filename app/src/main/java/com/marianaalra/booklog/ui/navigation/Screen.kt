@@ -8,12 +8,11 @@ sealed class Screen(val route: String) {
     object Home : Screen("home")
 
     // Rutas dinámicas que reciben el título del libro
-    object Reading : Screen("reading/{bookTitle}?fileUri={fileUri}") {
-        fun createRoute(title: String, uri: String?): String {
-            // Esto transforma los espacios en símbolos seguros (Ej: "Mi Libro" -> "Mi+Libro")
+    object Reading : Screen("reading/{bookTitle}/{bookId}?fileUri={fileUri}") {
+        fun createRoute(title: String, bookId: Long, uri: String?): String {
             val safeTitle = URLEncoder.encode(title, "UTF-8")
             val safeUri = uri?.let { URLEncoder.encode(it, "UTF-8") } ?: ""
-            return "reading/$safeTitle?fileUri=$safeUri"
+            return "reading/${safeTitle}/$bookId?fileUri=$safeUri"
         }
     }
     object Notes : Screen("notes/{bookTitle}/{bookId}") {

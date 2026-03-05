@@ -41,6 +41,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.rememberDrawerState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
@@ -64,12 +65,12 @@ import com.marianaalra.booklog.utils.extractPdfCover
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MainScreenWithDrawer(
-    bookViewModel: BookViewModel,           // 👈 NUEVO
+    bookViewModel: BookViewModel,
     usuarioId: Long,
-    onNavigateToReading: (String, String?) -> Unit = { _, _ -> },
-    onNavigateToNotes: (String, Long) -> Unit = { _, _ -> },
+    onNavigateToReading: (String, String?) -> Unit = { _: String, _: String? -> },  // 👈 tipos explícitos
+    onNavigateToNotes: (String, Long) -> Unit = { _: String, _: Long -> },          // 👈 tipos explícitos
     onLogout: () -> Unit = {}
-) {
+){
     val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
     val scope = rememberCoroutineScope()
     var selectedItem by remember { mutableStateOf("Biblioteca") }
@@ -78,6 +79,11 @@ fun MainScreenWithDrawer(
 
     // --- AQUÍ SIMULAMOS TU BASE DE DATOS (Lista Maestra) ---
     val books by bookViewModel.books.collectAsState()
+    LaunchedEffect(usuarioId) {
+        if (usuarioId != 0L) {
+            bookViewModel.loadBooks(usuarioId)
+        }
+    }
 
     val filePickerLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.OpenDocument(),
@@ -296,6 +302,9 @@ fun MainScreenWithDrawer(
                     onNavigateToNotes = { title ->
                         val book = books.find { it.title == title }
                         onNavigateToNotes(title, book?.id ?: 0L)
+                    },
+                    onStatusChange = { book, newStatus ->      // 👈 NUEVO
+                        bookViewModel.updateBook(book.copy(status = newStatus))
                     }
                 )
             }

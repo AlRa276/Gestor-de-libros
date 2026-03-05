@@ -29,7 +29,14 @@ class BookViewModel(
 
     fun addBook(book: Book) {
         viewModelScope.launch {
-            try { addBookUseCase(book) } catch (e: Exception) { e.printStackTrace() }
+            try {
+                android.util.Log.d("BookViewModel", "Guardando libro: ${book.title}, usuarioId: ${book.usuarioId}")
+                addBookUseCase(book)
+                android.util.Log.d("BookViewModel", "Libro guardado exitosamente")
+            } catch (e: Exception) {
+                android.util.Log.e("BookViewModel", "Error al guardar: ${e.message}", e)
+                e.printStackTrace()
+            }
         }
     }
 
@@ -38,4 +45,5 @@ class BookViewModel(
             try { updateBookUseCase(book) } catch (e: Exception) { e.printStackTrace() }
         }
     }
+
 }

@@ -56,6 +56,8 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import com.marianaalra.booklog.ui.viewmodel.BookViewModel
+import com.marianaalra.booklog.ui.viewmodel.NotesViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
@@ -65,7 +67,11 @@ import kotlinx.coroutines.withContext
 @Composable
 fun ReadingScreen(
     bookTitle: String,
-    fileUriString: String?, // 👈 Recibimos la ruta del archivo real
+    fileUriString: String?,
+    bookId: Long = 0L,
+    currentBook: com.marianaalra.booklog.domain.model.Book? = null,  // 👈
+    notesViewModel: NotesViewModel? = null,
+    bookViewModel: BookViewModel? = null,                             // 👈
     initialProgress: Float,
     onNavigateBack: () -> Unit,
     onAddNote: () -> Unit,
@@ -73,13 +79,14 @@ fun ReadingScreen(
     modifier: Modifier = Modifier
 ) {
     var currentProgress by remember { mutableFloatStateOf(initialProgress) }
-
+    var sliderProgress by remember { mutableFloatStateOf(initialProgress) }
     // Estados para los diálogos
     var showNoteDialog by remember { mutableStateOf(false) }
     var showQuoteDialog by remember { mutableStateOf(false) }
     var noteContent by remember { mutableStateOf("") }
     var quoteText by remember { mutableStateOf("") }
     var quoteComment by remember { mutableStateOf("") }
+
 
     // --- DIÁLOGOS ---
     if (showNoteDialog) {
@@ -94,7 +101,20 @@ fun ReadingScreen(
                 )
             },
             confirmButton = {
-                Button(onClick = { showNoteDialog = false; noteContent = "" }) { Text("Guardar") }
+                Button(onClick = {
+                    if (noteContent.isNotBlank()) {
+                        notesViewModel?.addNote(
+                            com.marianaalra.booklog.domain.model.NoteDomain(
+                                id = 0,
+                                bookId = bookId,
+                                contenido = noteContent,
+                                referenciaPagina = null
+                            )
+                        )
+                    }
+                    showNoteDialog = false
+                    noteContent = ""
+                }) { Text("Guardar") }
             },
             dismissButton = {
                 TextButton(onClick = { showNoteDialog = false }) { Text("Cancelar") }
@@ -121,7 +141,22 @@ fun ReadingScreen(
                 }
             },
             confirmButton = {
-                Button(onClick = { showQuoteDialog = false; quoteText = ""; quoteComment = "" }) { Text("Guardar") }
+                Button(onClick = {
+                    if (quoteText.isNotBlank()) {
+                        notesViewModel?.addQuote(
+                            com.marianaalra.booklog.domain.model.QuoteDomain(
+                                id = 0,
+                                bookId = bookId,
+                                textoCitado = quoteText,
+                                comentario = quoteComment.ifBlank { null },
+                                referenciaPagina = null
+                            )
+                        )
+                    }
+                    showQuoteDialog = false
+                    quoteText = ""
+                    quoteComment = ""
+                }) { Text("Guardar") }
             },
             dismissButton = {
                 TextButton(onClick = { showQuoteDialog = false }) { Text("Cancelar") }
@@ -162,10 +197,20 @@ fun ReadingScreen(
                     Row(
                         modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Slider(value = currentProgress, onValueChange = { currentProgress = it }, valueRange = 0f..1f, modifier = Modifier.weight(1f))
+                        Slider(
+                            value = sliderProgress,
+                            onValueChange = { sliderProgress = it },
+                            onValueChangeFinished = {
+                                currentProgress = sliderProgress
+                                currentBook?.let { book ->
+                                    bookViewModel?.updateBook(book.copy(progress = sliderProgress))
+                                }
+                            },
+                            valueRange = 0f..1f,
+                            modifier = Modifier.weight(1f)
+                        )
                         Spacer(Modifier.width(16.dp))
-                        Text("${(currentProgress * 100).toInt()}%", style = MaterialTheme.typography.labelMedium)
-                    }
+                        Text("${(sliderProgress * 100).toInt()}%", style = MaterialTheme.typography.labelMedium)                    }
                 }
             }
         }

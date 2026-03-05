@@ -27,5 +27,6 @@ data class BookEntity(
     val autor: String?,
     val progreso: Float = 0f, // 👈 El que agregamos para tu Slider
     val estado: String = "PENDIENTE",
+    val coverPath: String? = null,
     val fechaCreacion: Long = System.currentTimeMillis()
 )

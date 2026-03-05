@@ -19,7 +19,7 @@ import com.marianaalra.booklog.data.local.entity.UserEntity
         NoteEntiny::class,
         QuoteEntiny::class
     ],
-    version = 1, // Si en el futuro agregas una columna, cambias este número a 2
+    version = 2, // Si en el futuro agregas una columna, cambias este número a 2
     exportSchema = false
 )
 abstract class BookLogDatabase : RoomDatabase() {
