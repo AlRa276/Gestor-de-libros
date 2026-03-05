@@ -4,7 +4,6 @@ import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.compose.rememberLauncherForActivityResult
-
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
@@ -41,7 +40,6 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.rememberDrawerState
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -56,6 +54,8 @@ import kotlinx.coroutines.launch
 import com.marianaalra.booklog.domain.model.Book
 import com.marianaalra.booklog.ui.components.BookListSection
 import com.marianaalra.booklog.ui.theme.VistaTheme
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateListOf
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -68,10 +68,12 @@ fun MainScreenWithDrawer(
 // 1. Primero defines los estados del Drawer y Corrutinas
     val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
     val scope = rememberCoroutineScope()
+    var selectedItem by remember { mutableStateOf("Biblioteca") }
+    var searchQuery by remember { mutableStateOf("") }
 
     // --- AQUÍ SIMULAMOS TU BASE DE DATOS (Lista Maestra) ---
     val allBooks = remember {
-        listOf(
+        mutableStateListOf(
             Book("Diseño de Interfaces de Usuario", "pdf", 0.45f, "EN_PROGRESO"),
             Book("Estructuras de Datos y Algoritmos", "epub", 0.0f, "PENDIENTE"),
             Book("Análisis de Sistemas Complejos", "pdf", 1.0f, "FINALIZADA"),
@@ -108,7 +110,9 @@ fun MainScreenWithDrawer(
 
                 Text(
                     text = "BookLog",
-                    modifier = Modifier.padding(horizontal = 28.dp, vertical = 16.dp),
+                    modifier = Modifier
+                        .padding(horizontal = 28
+                            .dp, vertical = 16.dp),
                     style = MaterialTheme.typography.titleLarge,
                     color = MaterialTheme.colorScheme.primary
                 )
