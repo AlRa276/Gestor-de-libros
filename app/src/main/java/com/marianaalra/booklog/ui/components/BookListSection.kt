@@ -16,7 +16,7 @@ import com.marianaalra.booklog.domain.model.Book
 @Composable
 fun BookListSection(
     booksToShow: List<Book>, // 👈 Recibe la lista dinámica
-    onNavigateToReading: (String) -> Unit = {},
+    onNavigateToReading: (String, String?) -> Unit = { _, _ -> },
     onNavigateToNotes: (String) -> Unit = {},
     modifier: Modifier = Modifier
 ) {
@@ -32,7 +32,10 @@ fun BookListSection(
                 status = book.status,
                 // Asignamos un color por defecto o podrías agregarlo a tu data class
                 coverColor = Color(0xFFBCAAA4),
-                onOpenReading = { onNavigateToReading(book.title) },
+                onOpenReading = {
+                    // Mandamos el título Y la ruta guardada en el objeto libro
+                    onNavigateToReading(book.title, book.fileUri)
+                },
                 onNotesClick = { onNavigateToNotes(book.title) },
                 onEditClick = { },
                 onStatusChange = { }

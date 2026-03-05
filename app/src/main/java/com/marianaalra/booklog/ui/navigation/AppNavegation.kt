@@ -28,7 +28,7 @@ fun AppNavigation() {
                 onNavigateToRegister = { navController.navigate(Screen.Register.route) }
             )
         }
-        //PANTALLA DE REGISTRO
+        // 2. PANTALLA DE REGISTRO
         composable(Screen.Register.route) {
             RegisterScreen(
                 onRegisterClick = { username, email, password ->
@@ -43,31 +43,37 @@ fun AppNavigation() {
                 }
             )
         }
-        // 2. PANTALLA PRINCIPAL (BIBLIOTECA)
+        // 3. PANTALLA PRINCIPAL (BIBLIOTECA)
         composable(Screen.Home.route) {
             MainScreenWithDrawer(
-                onNavigateToReading = { bookTitle ->
-                    navController.navigate(Screen.Reading.createRoute(bookTitle))
+                // 👇 Ahora recibimos tanto el título como la ruta del archivo
+                onNavigateToReading = { bookTitle, fileUri ->
+                    navController.navigate(Screen.Reading.createRoute(bookTitle, fileUri))
                 },
                 onNavigateToNotes = { bookTitle ->
                     navController.navigate(Screen.Notes.createRoute(bookTitle))
                 },
                 onLogout = {
-                    // Al cerrar sesión, regresamos al login limpiando todo
                     navController.navigate(Screen.Login.route) { popUpTo(0) }
                 }
             )
         }
 
-        // 3. PANTALLA DE LECTURA
+
+        // --- 4. PANTALLA DE LECTURA ---
         composable(Screen.Reading.route) { backStackEntry ->
             val title = backStackEntry.arguments?.getString("bookTitle") ?: "Libro"
+            // Extraemos la ruta del archivo que viene en la URL
+            val encodedUri = backStackEntry.arguments?.getString("fileUri")
+            val fileUri = if (encodedUri.isNullOrEmpty()) null else android.net.Uri.decode(encodedUri)
+
             ReadingScreen(
                 bookTitle = title,
+                fileUriString = fileUri, // 👈 ¡ESTO ARREGLA EL ERROR ROJO!
                 initialProgress = 0f,
                 onNavigateBack = { navController.popBackStack() },
-                onAddNote = { /* Acción futura */ },
-                onAddCitation = { /* Acción futura */ }
+                onAddNote = { },
+                onAddCitation = { }
             )
         }
 

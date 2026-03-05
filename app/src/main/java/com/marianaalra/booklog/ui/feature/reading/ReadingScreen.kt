@@ -1,6 +1,11 @@
 package com.marianaalra.booklog.ui.feature.reading
 
+import android.graphics.Bitmap
+import android.graphics.pdf.PdfRenderer
+import android.net.Uri
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -9,9 +14,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.text.selection.SelectionContainer
-import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.outlined.BookmarkBorder
@@ -20,6 +23,7 @@ import androidx.compose.material.icons.outlined.NoteAdd
 import androidx.compose.material.icons.outlined.Settings
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
@@ -33,23 +37,31 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
-import com.marianaalra.booklog.ui.theme.VistaTheme
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
+import kotlinx.coroutines.withContext
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ReadingScreen(
     bookTitle: String,
+    fileUriString: String?, // 👈 Recibimos la ruta del archivo real
     initialProgress: Float,
     onNavigateBack: () -> Unit,
     onAddNote: () -> Unit,
@@ -58,35 +70,27 @@ fun ReadingScreen(
 ) {
     var currentProgress by remember { mutableFloatStateOf(initialProgress) }
 
-    // --- ESTADOS PARA LOS CUADROS DE DIÁLOGO ---
+    // Estados para los diálogos
     var showNoteDialog by remember { mutableStateOf(false) }
     var showQuoteDialog by remember { mutableStateOf(false) }
-
-    // Variables temporales para guardar lo que el usuario escribe
     var noteContent by remember { mutableStateOf("") }
     var quoteText by remember { mutableStateOf("") }
     var quoteComment by remember { mutableStateOf("") }
 
-    // --- DIÁLOGO PARA NOTAS ---
+    // --- DIÁLOGOS ---
     if (showNoteDialog) {
         AlertDialog(
             onDismissRequest = { showNoteDialog = false },
             title = { Text("Nueva Nota") },
             text = {
                 OutlinedTextField(
-                    value = noteContent,
-                    onValueChange = { noteContent = it },
+                    value = noteContent, onValueChange = { noteContent = it },
                     label = { Text("Escribe tu idea...") },
-                    modifier = Modifier.fillMaxWidth().height(120.dp),
-                    maxLines = 5
+                    modifier = Modifier.fillMaxWidth().height(120.dp), maxLines = 5
                 )
             },
             confirmButton = {
-                Button(onClick = {
-                    /* TODO: Aquí llamaremos a la Base de Datos para guardar */
-                    showNoteDialog = false
-                    noteContent = "" // Limpiamos el campo
-                }) { Text("Guardar") }
+                Button(onClick = { showNoteDialog = false; noteContent = "" }) { Text("Guardar") }
             },
             dismissButton = {
                 TextButton(onClick = { showNoteDialog = false }) { Text("Cancelar") }
@@ -94,7 +98,6 @@ fun ReadingScreen(
         )
     }
 
-    // --- DIÁLOGO PARA CITAS ---
     if (showQuoteDialog) {
         AlertDialog(
             onDismissRequest = { showQuoteDialog = false },
@@ -102,27 +105,19 @@ fun ReadingScreen(
             text = {
                 Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     OutlinedTextField(
-                        value = quoteText,
-                        onValueChange = { quoteText = it },
-                        label = { Text("Texto citado (Copiado del libro)") },
-                        modifier = Modifier.fillMaxWidth().height(100.dp),
-                        maxLines = 4
+                        value = quoteText, onValueChange = { quoteText = it },
+                        label = { Text("Texto citado del libro") },
+                        modifier = Modifier.fillMaxWidth().height(100.dp), maxLines = 4
                     )
                     OutlinedTextField(
-                        value = quoteComment,
-                        onValueChange = { quoteComment = it },
-                        label = { Text("Comentario u opinión (Opcional)") },
+                        value = quoteComment, onValueChange = { quoteComment = it },
+                        label = { Text("Comentario (Opcional)") },
                         modifier = Modifier.fillMaxWidth()
                     )
                 }
             },
             confirmButton = {
-                Button(onClick = {
-                    /* TODO: Aquí llamaremos a la Base de Datos para guardar */
-                    showQuoteDialog = false
-                    quoteText = ""
-                    quoteComment = ""
-                }) { Text("Guardar") }
+                Button(onClick = { showQuoteDialog = false; quoteText = ""; quoteComment = "" }) { Text("Guardar") }
             },
             dismissButton = {
                 TextButton(onClick = { showQuoteDialog = false }) { Text("Cancelar") }
@@ -134,15 +129,10 @@ fun ReadingScreen(
         topBar = {
             TopAppBar(
                 title = {
-                    Text(
-                        text = bookTitle, maxLines = 1, overflow = TextOverflow.Ellipsis,
-                        style = MaterialTheme.typography.titleMedium
-                    )
+                    Text(text = bookTitle, maxLines = 1, overflow = TextOverflow.Ellipsis, style = MaterialTheme.typography.titleMedium)
                 },
                 navigationIcon = {
-                    IconButton(onClick = onNavigateBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Regresar")
-                    }
+                    IconButton(onClick = onNavigateBack) { Icon(Icons.AutoMirrored.Filled.ArrowBack, "Regresar") }
                 },
                 actions = {
                     IconButton(onClick = { }) { Icon(Icons.Outlined.BookmarkBorder, "Marcador") }
@@ -153,90 +143,130 @@ fun ReadingScreen(
         bottomBar = {
             Surface(color = MaterialTheme.colorScheme.surfaceVariant, tonalElevation = 3.dp) {
                 Column(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp)) {
-                    // BOTONES PARA ABRIR DIÁLOGOS
                     Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceEvenly,
-                        verticalAlignment = Alignment.CenterVertically
+                        modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceEvenly, verticalAlignment = Alignment.CenterVertically
                     ) {
-                        TextButton(onClick = { showQuoteDialog = true }) { // 👈 Abre ventana Cita
-                            Icon(Icons.Outlined.FormatQuote, contentDescription = "Crear Cita")
-                            Spacer(Modifier.width(8.dp))
-                            Text("Citar")
+                        TextButton(onClick = { showQuoteDialog = true }) {
+                            Icon(Icons.Outlined.FormatQuote, null); Spacer(Modifier.width(8.dp)); Text("Citar")
                         }
-                        Text(text = "|", color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.3f))
-                        TextButton(onClick = { showNoteDialog = true }) { // 👈 Abre ventana Nota
-                            Icon(Icons.Outlined.NoteAdd, contentDescription = "Añadir Nota")
-                            Spacer(Modifier.width(8.dp))
-                            Text("Anotar")
+                        Text("|", color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.3f))
+                        TextButton(onClick = { showNoteDialog = true }) {
+                            Icon(Icons.Outlined.NoteAdd, null); Spacer(Modifier.width(8.dp)); Text("Anotar")
                         }
                     }
-
                     HorizontalDivider(modifier = Modifier.padding(vertical = 4.dp), color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.1f))
-
                     Row(
-                        modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
+                        modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Slider(
-                            value = currentProgress, onValueChange = { currentProgress = it },
-                            valueRange = 0f..1f, modifier = Modifier.weight(1f)
-                        )
+                        Slider(value = currentProgress, onValueChange = { currentProgress = it }, valueRange = 0f..1f, modifier = Modifier.weight(1f))
                         Spacer(Modifier.width(16.dp))
-                        Text(
-                            text = "${(currentProgress * 100).toInt()}%",
-                            style = MaterialTheme.typography.labelMedium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
+                        Text("${(currentProgress * 100).toInt()}%", style = MaterialTheme.typography.labelMedium)
                     }
                 }
             }
         }
     ) { paddingValues ->
-        // --- ÁREA DE LECTURA ---
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(paddingValues)
-                .padding(horizontal = 24.dp)
-                .verticalScroll(rememberScrollState())
-        ) {
-            Text(
-                text = "Capítulo 1",
-                style = MaterialTheme.typography.headlineMedium,
-                color = MaterialTheme.colorScheme.onSurface,
-                modifier = Modifier.padding(top = 16.dp, bottom = 24.dp)
-            )
-
-            // 👇 SELECTION CONTAINER: Permite mantener presionado y copiar el texto
-            SelectionContainer {
-                Text(
-                    text = "En el diseño de interfaces moderno, la cohesión y el acoplamiento son principios fundamentales. \n\n" +
-                            "Para hacer una prueba de copiado, mantén presionado este texto. Te aparecerán los selectores nativos de Android. Copia el texto, luego presiona el botón 'Citar' en la barra inferior y pégalo en el recuadro de texto citado.\n\n" +
-                            "En una implementación futura con WebView o PdfRenderer, el texto seleccionado se capturaría automáticamente mediante JavaScript o la API del PDF.",
-                    style = MaterialTheme.typography.bodyLarge.copy(
-                        lineHeight = 28.sp,
-                        letterSpacing = 0.5.sp
-                    ),
-                    color = MaterialTheme.colorScheme.onSurface
-                )
+        // 👇 AQUÍ CARGAMOS EL LECTOR DE PDF
+        Box(modifier = Modifier.fillMaxSize().padding(paddingValues)) {
+            if (fileUriString != null) {
+                val uri = Uri.parse(fileUriString)
+                PdfViewer(fileUri = uri)
+            } else {
+                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                    Text("No se pudo cargar el archivo.")
+                }
             }
-            Spacer(modifier = Modifier.padding(bottom = 24.dp))
         }
     }
 }
 
-@Preview(showBackground = true, showSystemUi = true)
+// ====================================================================
+// MOTOR NATIVO DE LECTURA DE PDF PARA JETPACK COMPOSE
+// ====================================================================
 @Composable
-private fun ReadingScreenPreview() {
-    VistaTheme {
-        ReadingScreen(
-            bookTitle = "Diseño de Interfaces de Usuario",
-            initialProgress = 0.35f,
-            onNavigateBack = {},
-            onAddNote = {},
-            onAddCitation = {}
+fun PdfViewer(fileUri: Uri, modifier: Modifier = Modifier) {
+    val context = LocalContext.current
+    var pdfRenderer by remember { mutableStateOf<PdfRenderer?>(null) }
+    var pageCount by remember { mutableIntStateOf(0) }
+
+    // Mutex asegura que solo dibujemos una página a la vez para que el celular no se trabe
+    val renderMutex = remember { Mutex() }
+
+    // Abrimos el archivo
+    LaunchedEffect(fileUri) {
+        withContext(Dispatchers.IO) {
+            try {
+                val fileDescriptor = context.contentResolver.openFileDescriptor(fileUri, "r")
+                if (fileDescriptor != null) {
+                    pdfRenderer = PdfRenderer(fileDescriptor)
+                    pageCount = pdfRenderer?.pageCount ?: 0
+                }
+            } catch (e: Exception) {
+                e.printStackTrace()
+            }
+        }
+    }
+
+    // Cerramos el archivo al salir de la pantalla para liberar memoria
+    DisposableEffect(Unit) {
+        onDispose { pdfRenderer?.close() }
+    }
+
+    if (pdfRenderer != null) {
+        // Un LazyColumn hace Scroll vertical y solo dibuja las páginas que caben en pantalla
+        LazyColumn(modifier = modifier.fillMaxSize()) {
+            items(pageCount) { index ->
+                PdfPage(pdfRenderer = pdfRenderer!!, pageIndex = index, renderMutex = renderMutex)
+                Spacer(modifier = Modifier.height(8.dp)) // Espacio entre páginas
+            }
+        }
+    } else {
+        Box(modifier = modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+            CircularProgressIndicator()
+        }
+    }
+}
+
+@Composable
+fun PdfPage(pdfRenderer: PdfRenderer, pageIndex: Int, renderMutex: Mutex) {
+    var bitmap by remember { mutableStateOf<Bitmap?>(null) }
+
+    LaunchedEffect(pageIndex) {
+        withContext(Dispatchers.IO) {
+            renderMutex.withLock {
+                try {
+                    val page = pdfRenderer.openPage(pageIndex)
+                    // Escala x2 para que las letras se vean nítidas al hacer zoom
+                    val scale = 2f
+                    val bmp = Bitmap.createBitmap(
+                        (page.width * scale).toInt(),
+                        (page.height * scale).toInt(),
+                        Bitmap.Config.ARGB_8888
+                    )
+                    // Pintamos fondo blanco (los PDF por defecto son transparentes)
+                    val canvas = android.graphics.Canvas(bmp)
+                    canvas.drawColor(android.graphics.Color.WHITE)
+
+                    page.render(bmp, null, null, PdfRenderer.Page.RENDER_MODE_FOR_DISPLAY)
+                    page.close()
+                    bitmap = bmp
+                } catch (e: Exception) {
+                    e.printStackTrace()
+                }
+            }
+        }
+    }
+
+    if (bitmap != null) {
+        Image(
+            bitmap = bitmap!!.asImageBitmap(),
+            contentDescription = "Página ${pageIndex + 1}",
+            modifier = Modifier.fillMaxWidth(),
+            contentScale = ContentScale.FillWidth
         )
+    } else {
+        Box(modifier = Modifier.fillMaxWidth().height(400.dp), contentAlignment = Alignment.Center) {
+            CircularProgressIndicator() // Cargando mientras se dibuja
+        }
     }
 }

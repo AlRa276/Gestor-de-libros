@@ -1,5 +1,10 @@
 package com.marianaalra.booklog.ui.feature.library
 
+import android.net.Uri
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.activity.compose.rememberLauncherForActivityResult
+
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
@@ -55,19 +60,46 @@ import com.marianaalra.booklog.ui.theme.VistaTheme
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MainScreenWithDrawer(
-    onNavigateToReading: (String) -> Unit = {},
+    onNavigateToReading: (String, String?) -> Unit = { _, _ -> },
     onNavigateToNotes: (String) -> Unit = {},
     onLogout: () -> Unit = {}
 ) {
 
-
+// 1. Primero defines los estados del Drawer y Corrutinas
     val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
     val scope = rememberCoroutineScope()
-    var selectedItem by remember { mutableStateOf("Biblioteca") }
 
-    // Estado para guardar lo que el usuario escribe en el buscador
-    var searchQuery by remember { mutableStateOf("") }
+    // --- AQUÍ SIMULAMOS TU BASE DE DATOS (Lista Maestra) ---
+    val allBooks = remember {
+        listOf(
+            Book("Diseño de Interfaces de Usuario", "pdf", 0.45f, "EN_PROGRESO"),
+            Book("Estructuras de Datos y Algoritmos", "epub", 0.0f, "PENDIENTE"),
+            Book("Análisis de Sistemas Complejos", "pdf", 1.0f, "FINALIZADA"),
+            Book("Cálculo Multivariable", "pdf", 0.0f, "PENDIENTE"),
+            Book("Metodologías de Desarrollo de Software", "epub", 0.80f, "EN_PROGRESO")
+        )
+    }
+    // 2. Aquí es donde va el código que mencionas (antes del Scaffold)
+    val filePickerLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.OpenDocument(),
+        onResult = { uri: Uri? ->
+            if (uri != null) {
+                val isEpub = uri.toString().contains("epub", ignoreCase = true)
+                val format = if (isEpub) "epub" else "pdf"
+                val tempName = uri.path?.substringAfterLast("/")?.substringBeforeLast(".") ?: "Nuevo Documento"
 
+                allBooks.add(
+                    Book(
+                        title = tempName,
+                        fileFormat = format,
+                        progress = 0.0f,
+                        status = "PENDIENTE",
+                        fileUri = uri.toString()
+                    )
+                )
+            }
+        }
+    )
     ModalNavigationDrawer(
         drawerState = drawerState,
         drawerContent = {
@@ -177,16 +209,7 @@ fun MainScreenWithDrawer(
             }
         }
     ) {
-        // --- AQUÍ SIMULAMOS TU BASE DE DATOS (Lista Maestra) ---
-        val allBooks = remember {
-            listOf(
-                Book("Diseño de Interfaces de Usuario", "pdf", 0.45f, "EN_PROGRESO"),
-                Book("Estructuras de Datos y Algoritmos", "epub", 0.0f, "PENDIENTE"),
-                Book("Análisis de Sistemas Complejos", "pdf", 1.0f, "FINALIZADA"),
-                Book("Cálculo Multivariable", "pdf", 0.0f, "PENDIENTE"),
-                Book("Metodologías de Desarrollo de Software", "epub", 0.80f, "EN_PROGRESO")
-            )
-        }
+
 
         // --- AQUÍ APLICAMOS LA MAGIA DEL FILTRO ---
         val filteredBooks = when (selectedItem) {
