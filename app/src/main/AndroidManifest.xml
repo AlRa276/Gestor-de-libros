@@ -15,7 +15,8 @@
         <activity
             android:name=".MainActivity"
             android:exported="true"
-            android:theme="@style/Theme.BookLog">
+            android:theme="@style/Theme.BookLog"
+            android:grantUriPermissions="true">
 
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />

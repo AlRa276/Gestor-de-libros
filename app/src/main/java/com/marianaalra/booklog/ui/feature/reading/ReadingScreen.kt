@@ -173,8 +173,7 @@ fun ReadingScreen(
         // 👇 AQUÍ CARGAMOS EL LECTOR DE PDF
         Box(modifier = Modifier.fillMaxSize().padding(paddingValues)) {
             if (fileUriString != null) {
-                val uri = Uri.parse(fileUriString)
-                PdfViewer(fileUri = uri)
+                PdfViewer(fileUri = Uri.fromFile(File(fileUriString)))
             } else {
                 Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                     Text("No se pudo cargar el archivo.")
@@ -199,27 +198,25 @@ fun PdfViewer(fileUri: Uri, modifier: Modifier = Modifier) {
     LaunchedEffect(fileUri) {
         withContext(Dispatchers.IO) {
             try {
-                // 1. Creamos un archivo temporal en la memoria interna de tu app
-                val tempFile = File(context.cacheDir, "temp_book.pdf")
+                // 👇 Ahora abrimos directamente como File, sin ContentResolver
+                val file = File(fileUri.path ?: return@withContext)
 
-                // 2. Copiamos el contenido del archivo original al archivo temporal
-                val inputStream: InputStream? = context.contentResolver.openInputStream(fileUri)
-                val outputStream = FileOutputStream(tempFile)
-                inputStream?.copyTo(outputStream)
-
-                inputStream?.close()
-                outputStream.close()
-
-                // 3. Abrimos el archivo temporal (que ahora es 100% nuestro)
-                val fileDescriptor = ParcelFileDescriptor.open(tempFile, ParcelFileDescriptor.MODE_READ_ONLY)
-                if (fileDescriptor != null) {
-                    pdfRenderer = PdfRenderer(fileDescriptor)
-                    pageCount = pdfRenderer?.pageCount ?: 0
-                } else {
+                if (!file.exists() || file.length() == 0L) {
                     errorLoading = true
+                    return@withContext
                 }
+
+                val fileDescriptor = ParcelFileDescriptor.open(
+                    file,
+                    ParcelFileDescriptor.MODE_READ_ONLY
+                )
+                pdfRenderer = PdfRenderer(fileDescriptor)
+                pageCount = pdfRenderer?.pageCount ?: 0
+
+                if (pageCount == 0) errorLoading = true
+
             } catch (e: Exception) {
-                e.printStackTrace()
+                android.util.Log.e("PdfViewer", "Error: ${e.message}", e)
                 errorLoading = true
             }
         }

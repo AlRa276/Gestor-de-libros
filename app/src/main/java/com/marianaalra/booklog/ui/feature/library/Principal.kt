@@ -56,6 +56,7 @@ import androidx.compose.ui.platform.LocalContext
 import com.marianaalra.booklog.domain.model.Book
 import com.marianaalra.booklog.ui.components.BookListSection
 import com.marianaalra.booklog.ui.theme.VistaTheme
+import com.marianaalra.booklog.utils.copyPdfToInternalStorage
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -81,29 +82,30 @@ fun MainScreenWithDrawer(
         )
     }
 
+
     val filePickerLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.OpenDocument(),
         onResult = { uri: Uri? ->
             if (uri != null) {
-                try {
-                    val takeFlags: Int = Intent.FLAG_GRANT_READ_URI_PERMISSION
-                    context.contentResolver.takePersistableUriPermission(uri, takeFlags)
-                } catch (e: Exception) {
-                    e.printStackTrace()
-                }
-                val isEpub = uri.toString().contains("epub", ignoreCase = true)
-                val format = if (isEpub) "epub" else "pdf"
-                val tempName = uri.path?.substringAfterLast("/")?.substringBeforeLast(".") ?: "Nuevo Documento"
+                // 👇 Copiamos el archivo AHORA, mientras tenemos acceso garantizado
+                val internalPath = copyPdfToInternalStorage(context, uri)
 
-                allBooks.add(
-                    Book(
-                        title = tempName,
-                        fileFormat = format,
-                        progress = 0.0f,
-                        status = "PENDIENTE",
-                        fileUri = uri.toString()
+                if (internalPath != null) {
+                    val tempName = uri.path
+                        ?.substringAfterLast("/")
+                        ?.substringBeforeLast(".")
+                        ?: "Nuevo Documento"
+
+                    allBooks.add(
+                        Book(
+                            title = tempName,
+                            fileFormat = "pdf",
+                            progress = 0.0f,
+                            status = "PENDIENTE",
+                            fileUri = internalPath  // 👈 Guardamos la ruta interna, no la URI
+                        )
                     )
-                )
+                }
             }
         }
     )
