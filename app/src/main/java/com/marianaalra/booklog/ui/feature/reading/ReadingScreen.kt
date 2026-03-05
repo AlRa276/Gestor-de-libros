@@ -1,5 +1,9 @@
 package com.marianaalra.booklog.ui.feature.reading
 
+import java.io.File
+import java.io.FileOutputStream
+import java.io.InputStream
+import android.os.ParcelFileDescriptor
 import android.graphics.Bitmap
 import android.graphics.pdf.PdfRenderer
 import android.net.Uri
@@ -188,41 +192,61 @@ fun PdfViewer(fileUri: Uri, modifier: Modifier = Modifier) {
     val context = LocalContext.current
     var pdfRenderer by remember { mutableStateOf<PdfRenderer?>(null) }
     var pageCount by remember { mutableIntStateOf(0) }
+    var errorLoading by remember { mutableStateOf(false) }
 
-    // Mutex asegura que solo dibujemos una página a la vez para que el celular no se trabe
     val renderMutex = remember { Mutex() }
 
-    // Abrimos el archivo
     LaunchedEffect(fileUri) {
         withContext(Dispatchers.IO) {
             try {
-                val fileDescriptor = context.contentResolver.openFileDescriptor(fileUri, "r")
+                // 1. Creamos un archivo temporal en la memoria interna de tu app
+                val tempFile = File(context.cacheDir, "temp_book.pdf")
+
+                // 2. Copiamos el contenido del archivo original al archivo temporal
+                val inputStream: InputStream? = context.contentResolver.openInputStream(fileUri)
+                val outputStream = FileOutputStream(tempFile)
+                inputStream?.copyTo(outputStream)
+
+                inputStream?.close()
+                outputStream.close()
+
+                // 3. Abrimos el archivo temporal (que ahora es 100% nuestro)
+                val fileDescriptor = ParcelFileDescriptor.open(tempFile, ParcelFileDescriptor.MODE_READ_ONLY)
                 if (fileDescriptor != null) {
                     pdfRenderer = PdfRenderer(fileDescriptor)
                     pageCount = pdfRenderer?.pageCount ?: 0
+                } else {
+                    errorLoading = true
                 }
             } catch (e: Exception) {
                 e.printStackTrace()
+                errorLoading = true
             }
         }
     }
 
-    // Cerramos el archivo al salir de la pantalla para liberar memoria
     DisposableEffect(Unit) {
         onDispose { pdfRenderer?.close() }
     }
 
-    if (pdfRenderer != null) {
-        // Un LazyColumn hace Scroll vertical y solo dibuja las páginas que caben en pantalla
+    if (errorLoading) {
+        Box(modifier = modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+            Text("Error al cargar el PDF. El archivo puede estar corrupto o protegido.", color = MaterialTheme.colorScheme.error)
+        }
+    } else if (pdfRenderer != null) {
         LazyColumn(modifier = modifier.fillMaxSize()) {
             items(pageCount) { index ->
                 PdfPage(pdfRenderer = pdfRenderer!!, pageIndex = index, renderMutex = renderMutex)
-                Spacer(modifier = Modifier.height(8.dp)) // Espacio entre páginas
+                Spacer(modifier = Modifier.height(8.dp))
             }
         }
     } else {
         Box(modifier = modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-            CircularProgressIndicator()
+            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                CircularProgressIndicator()
+                Spacer(Modifier.height(16.dp))
+                Text("Cargando y procesando libro...")
+            }
         }
     }
 }
