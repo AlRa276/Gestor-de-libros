@@ -5,5 +5,7 @@ data class Book(
     val fileFormat: String,
     val progress: Float,
     val status: String,
-    val fileUri: String? = null // 👈 NUEVO: Guardará la ruta del archivo
+    val fileUri: String? = null, // 👈 NUEVO: Guardará la ruta del archivo
+    val nombreArchivo: String? = null,
+    val coverPath: String? = null
 )

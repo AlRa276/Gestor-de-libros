@@ -30,6 +30,7 @@ fun BookListSection(
                 fileFormat = book.fileFormat,
                 progress = book.progress,
                 status = book.status,
+                coverPath = book.coverPath,
                 // Asignamos un color por defecto o podrías agregarlo a tu data class
                 coverColor = Color(0xFFBCAAA4),
                 onOpenReading = {

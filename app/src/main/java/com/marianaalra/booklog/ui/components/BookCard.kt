@@ -1,5 +1,6 @@
 package com.marianaalra.booklog.ui.components
 
+import android.graphics.BitmapFactory
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -8,6 +9,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.aspectRatio
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -39,11 +41,14 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.marianaalra.booklog.ui.theme.VistaTheme
+import androidx.compose.foundation.Image
 
 @Composable
 fun BookCard(
@@ -51,6 +56,7 @@ fun BookCard(
     fileFormat: String,
     progress: Float,
     status: String,
+    coverPath: String? = null,
     onOpenReading: () -> Unit,
     onNotesClick: () -> Unit,
     onEditClick: () -> Unit,
@@ -81,12 +87,28 @@ fun BookCard(
                     .clickable(onClick = onOpenReading),
                 contentAlignment = Alignment.Center
             ) {
-                Icon(
-                    imageVector = Icons.Outlined.MenuBook,
-                    contentDescription = "Abrir lectura",
-                    tint = MaterialTheme.colorScheme.onPrimaryContainer,
-                    modifier = Modifier.size(28.dp)
-                )
+                if (coverPath != null) {
+                    // 👇 Cargamos la imagen guardada
+                    val bitmap = remember(coverPath) {
+                        BitmapFactory.decodeFile(coverPath)?.asImageBitmap()
+                    }
+                    if (bitmap != null) {
+                        Image(
+                            bitmap = bitmap,
+                            contentDescription = "Portada del libro",
+                            modifier = Modifier.fillMaxSize(),
+                            contentScale = ContentScale.Crop
+                        )
+                    }
+                } else {
+                    // Ícono de respaldo si no hay portada
+                    Icon(
+                        imageVector = Icons.Outlined.MenuBook,
+                        contentDescription = "Abrir lectura",
+                        tint = MaterialTheme.colorScheme.onPrimaryContainer,
+                        modifier = Modifier.size(28.dp)
+                    )
+                }
             }
 
             Column(

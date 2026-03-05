@@ -57,6 +57,7 @@ import com.marianaalra.booklog.domain.model.Book
 import com.marianaalra.booklog.ui.components.BookListSection
 import com.marianaalra.booklog.ui.theme.VistaTheme
 import com.marianaalra.booklog.utils.copyPdfToInternalStorage
+import com.marianaalra.booklog.utils.extractPdfCover
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -82,27 +83,37 @@ fun MainScreenWithDrawer(
         )
     }
 
-
     val filePickerLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.OpenDocument(),
         onResult = { uri: Uri? ->
             if (uri != null) {
-                // 👇 Copiamos el archivo AHORA, mientras tenemos acceso garantizado
                 val internalPath = copyPdfToInternalStorage(context, uri)
 
                 if (internalPath != null) {
-                    val tempName = uri.path
-                        ?.substringAfterLast("/")
-                        ?.substringBeforeLast(".")
-                        ?: "Nuevo Documento"
+                    // 👇 Extraemos la portada justo después de copiar
+                    val coverPath = extractPdfCover(context, internalPath)
+
+                    val nombreReal = context.contentResolver
+                        .query(uri, null, null, null, null)
+                        ?.use { cursor ->
+                            val nameIndex = cursor.getColumnIndex(
+                                android.provider.OpenableColumns.DISPLAY_NAME
+                            )
+                            cursor.moveToFirst()
+                            cursor.getString(nameIndex)
+                        } ?: "Nuevo Documento.pdf"
+
+                    val titulo = nombreReal.substringBeforeLast(".")
 
                     allBooks.add(
                         Book(
-                            title = tempName,
+                            title = titulo,
                             fileFormat = "pdf",
                             progress = 0.0f,
                             status = "PENDIENTE",
-                            fileUri = internalPath  // 👈 Guardamos la ruta interna, no la URI
+                            fileUri = internalPath,
+                            nombreArchivo = nombreReal,
+                            coverPath = coverPath  // 👈 AGREGA ESTO
                         )
                     )
                 }
