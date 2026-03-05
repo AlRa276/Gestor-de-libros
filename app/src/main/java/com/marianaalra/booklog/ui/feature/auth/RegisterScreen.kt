@@ -16,6 +16,7 @@ import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -32,6 +33,8 @@ import com.marianaalra.booklog.ui.theme.VistaTheme // o el nombre real de tu tem
 fun RegisterScreen(
     onRegisterClick: (username: String, email: String, password: String) -> Unit,
     onNavigateToLogin: () -> Unit,
+    errorMessage: String? = null,       // 👈 AGREGA
+    onErrorShown: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     var username by remember { mutableStateOf("") }
@@ -119,7 +122,14 @@ fun RegisterScreen(
                     unfocusedTextColor = Color.White
                 )
             )
-
+            if (errorMessage != null) {
+                Text(
+                    text = errorMessage,
+                    color = MaterialTheme.colorScheme.error,
+                    style = MaterialTheme.typography.bodySmall
+                )
+                LaunchedEffect(errorMessage) { onErrorShown() }
+            }
             Button(
                 onClick = { onRegisterClick(username, email, password) },
                 modifier = Modifier.fillMaxWidth()

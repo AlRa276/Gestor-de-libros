@@ -41,6 +41,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.rememberDrawerState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
@@ -56,14 +57,17 @@ import androidx.compose.ui.platform.LocalContext
 import com.marianaalra.booklog.domain.model.Book
 import com.marianaalra.booklog.ui.components.BookListSection
 import com.marianaalra.booklog.ui.theme.VistaTheme
+import com.marianaalra.booklog.ui.viewmodel.BookViewModel
 import com.marianaalra.booklog.utils.copyPdfToInternalStorage
 import com.marianaalra.booklog.utils.extractPdfCover
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MainScreenWithDrawer(
+    bookViewModel: BookViewModel,           // 👈 NUEVO
+    usuarioId: Long,
     onNavigateToReading: (String, String?) -> Unit = { _, _ -> },
-    onNavigateToNotes: (String) -> Unit = {},
+    onNavigateToNotes: (String, Long) -> Unit = { _, _ -> },
     onLogout: () -> Unit = {}
 ) {
     val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
@@ -73,15 +77,7 @@ fun MainScreenWithDrawer(
     val context = LocalContext.current
 
     // --- AQUÍ SIMULAMOS TU BASE DE DATOS (Lista Maestra) ---
-    val allBooks = remember {
-        mutableStateListOf(
-            Book(title = "Diseño de Interfaces de Usuario", fileFormat = "pdf", progress = 0.45f, status = "EN_PROGRESO"),
-            Book(title = "Estructuras de Datos y Algoritmos", fileFormat = "epub", progress = 0.0f, status = "PENDIENTE"),
-            Book(title = "Análisis de Sistemas Complejos", fileFormat = "pdf", progress = 1.0f, status = "FINALIZADA"),
-            Book(title = "Cálculo Multivariable", fileFormat = "pdf", progress = 0.0f, status = "PENDIENTE"),
-            Book(title = "Metodologías de Desarrollo de Software", fileFormat = "epub", progress = 0.80f, status = "EN_PROGRESO")
-        )
-    }
+    val books by bookViewModel.books.collectAsState()
 
     val filePickerLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.OpenDocument(),
@@ -105,15 +101,14 @@ fun MainScreenWithDrawer(
 
                     val titulo = nombreReal.substringBeforeLast(".")
 
-                    allBooks.add(
+                    bookViewModel.addBook(
                         Book(
+                            usuarioId = usuarioId,
                             title = titulo,
                             fileFormat = "pdf",
-                            progress = 0.0f,
-                            status = "PENDIENTE",
                             fileUri = internalPath,
                             nombreArchivo = nombreReal,
-                            coverPath = coverPath  // 👈 AGREGA ESTO
+                            coverPath = coverPath
                         )
                     )
                 }
@@ -229,10 +224,10 @@ fun MainScreenWithDrawer(
     ) {
 
         val filteredBooks = when (selectedItem) {
-            "Biblioteca" -> allBooks
-            "Pendientes" -> allBooks.filter { it.status == "PENDIENTE" }
-            "En progreso" -> allBooks.filter { it.status == "EN_PROGRESO" }
-            "Finalizadas" -> allBooks.filter { it.status == "FINALIZADA" }
+            "Biblioteca" -> books
+            "Pendientes" -> books.filter { it.status == "PENDIENTE" }
+            "En progreso" -> books.filter { it.status == "EN_PROGRESO" }
+            "Finalizadas" -> books.filter { it.status == "FINALIZADA" }
             else -> emptyList()
         }
 
@@ -298,7 +293,10 @@ fun MainScreenWithDrawer(
                 BookListSection(
                     booksToShow = filteredBooks,
                     onNavigateToReading = onNavigateToReading,
-                    onNavigateToNotes = onNavigateToNotes,
+                    onNavigateToNotes = { title ->
+                        val book = books.find { it.title == title }
+                        onNavigateToNotes(title, book?.id ?: 0L)
+                    }
                 )
             }
         }
@@ -309,6 +307,5 @@ fun MainScreenWithDrawer(
 @Composable
 private fun MainScreenWithDrawerPreview() {
     VistaTheme {
-        MainScreenWithDrawer()
     }
 }

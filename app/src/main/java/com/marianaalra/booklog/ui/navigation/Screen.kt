@@ -16,7 +16,8 @@ sealed class Screen(val route: String) {
             return "reading/$safeTitle?fileUri=$safeUri"
         }
     }
-    object Notes : Screen("notes/{bookTitle}") {
-        fun createRoute(title: String) = "notes/$title"
+    object Notes : Screen("notes/{bookTitle}/{bookId}") {
+        fun createRoute(title: String, bookId: Long) =
+            "notes/${URLEncoder.encode(title, "UTF-8")}/$bookId"
     }
 }

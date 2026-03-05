@@ -17,6 +17,7 @@ import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -32,6 +33,8 @@ import com.marianaalra.booklog.ui.theme.VistaTheme
 fun LoginScreen(
     onLoginClick: (username: String, password: String) -> Unit,
     onNavigateToRegister: () -> Unit,
+    errorMessage: String? = null,       // 👈 NUEVO
+    onErrorShown: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     var username by rememberSaveable { mutableStateOf("") }
@@ -98,6 +101,14 @@ fun LoginScreen(
                     unfocusedTextColor = Color.White
                 )
             )
+            if (errorMessage != null) {
+                Text(
+                    text = errorMessage,
+                    color = MaterialTheme.colorScheme.error,
+                    style = MaterialTheme.typography.bodySmall
+                )
+                LaunchedEffect(errorMessage) { onErrorShown() }
+            }
 
             Button(
                 onClick = { onLoginClick(username, password) },

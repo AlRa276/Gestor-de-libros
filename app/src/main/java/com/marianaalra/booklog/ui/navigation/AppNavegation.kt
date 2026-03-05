@@ -1,78 +1,100 @@
+// AppNavegation.kt
 package com.marianaalra.booklog.ui.navigation
 
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.ui.platform.LocalContext
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import com.marianaalra.booklog.BookLogApp
 import com.marianaalra.booklog.ui.feature.auth.LoginScreen
 import com.marianaalra.booklog.ui.feature.auth.RegisterScreen
 import com.marianaalra.booklog.ui.feature.library.MainScreenWithDrawer
 import com.marianaalra.booklog.ui.feature.notes.NotesAndQuotesScreen
 import com.marianaalra.booklog.ui.feature.reading.ReadingScreen
+import com.marianaalra.booklog.ui.viewmodel.AuthViewModel
+import com.marianaalra.booklog.ui.viewmodel.BookViewModel
+import com.marianaalra.booklog.ui.viewmodel.NotesViewModel
+import com.marianaalra.booklog.ui.viewmodel.ViewModelFactory
 import java.net.URLDecoder
 
 @Composable
 fun AppNavigation() {
     val navController = rememberNavController()
+    val context = LocalContext.current
+    val app = context.applicationContext as BookLogApp
+    val factory = ViewModelFactory(app)
+
+    // ViewModels compartidos entre pantallas
+    val authViewModel: AuthViewModel = viewModel(factory = factory)
+    val bookViewModel: BookViewModel = viewModel(factory = factory)
+    val notesViewModel: NotesViewModel = viewModel(factory = factory)
 
     NavHost(navController = navController, startDestination = Screen.Login.route) {
 
-        // 1. PANTALLA DE LOGIN
         composable(Screen.Login.route) {
+            val error by authViewModel.error.collectAsState()
             LoginScreen(
-                onLoginClick = { username, password ->
-                    // Al iniciar sesión, vamos al Home y destruimos el historial del login
-                    navController.navigate(Screen.Home.route) {
-                        popUpTo(Screen.Login.route) { inclusive = true }
+                onLoginClick = { correo, contrasena ->
+                    authViewModel.login(correo, contrasena) {
+                        navController.navigate(Screen.Home.route) {
+                            popUpTo(Screen.Login.route) { inclusive = true }
+                        }
                     }
                 },
-                onNavigateToRegister = { navController.navigate(Screen.Register.route) }
+                onNavigateToRegister = { navController.navigate(Screen.Register.route) },
+                errorMessage = error,
+                onErrorShown = { authViewModel.clearError() }
             )
         }
-        // 2. PANTALLA DE REGISTRO
+
         composable(Screen.Register.route) {
+            val error by authViewModel.error.collectAsState()
             RegisterScreen(
                 onRegisterClick = { username, email, password ->
-                    // Simulamos que al registrarse entra directo a la app
-                    navController.navigate(Screen.Home.route) {
-                        popUpTo(Screen.Login.route) { inclusive = true }
+                    authViewModel.register(username, email, password) {
+                        navController.navigate(Screen.Home.route) {
+                            popUpTo(Screen.Login.route) { inclusive = true }
+                        }
                     }
                 },
-                onNavigateToLogin = {
-                    // Esto hace que el botón de "Ya tengo cuenta" te regrese al Login
-                    navController.popBackStack()
-                }
+                onNavigateToLogin = { navController.popBackStack() },
+                errorMessage = error,
+                onErrorShown = { authViewModel.clearError() }
             )
         }
-        // 3. PANTALLA PRINCIPAL (BIBLIOTECA)
+
         composable(Screen.Home.route) {
+            val currentUser by authViewModel.currentUser.collectAsState()
             MainScreenWithDrawer(
-                // 👇 Ahora recibimos tanto el título como la ruta del archivo
+                bookViewModel = bookViewModel,
+                usuarioId = currentUser?.id ?: 0L,
                 onNavigateToReading = { bookTitle, fileUri ->
                     navController.navigate(Screen.Reading.createRoute(bookTitle, fileUri))
                 },
-                onNavigateToNotes = { bookTitle ->
-                    navController.navigate(Screen.Notes.createRoute(bookTitle))
+                onNavigateToNotes = { bookTitle, bookId ->
+                    navController.navigate(Screen.Notes.createRoute(bookTitle, bookId))
                 },
                 onLogout = {
-                    navController.navigate(Screen.Login.route) { popUpTo(0) }
+                    authViewModel.logout {
+                        navController.navigate(Screen.Login.route) { popUpTo(0) }
+                    }
                 }
             )
         }
 
-
-        // --- 4. PANTALLA DE LECTURA ---
         composable(Screen.Reading.route) { backStackEntry ->
-            // Extraemos los textos protegidos y los regresamos a la normalidad
             val rawTitle = backStackEntry.arguments?.getString("bookTitle") ?: "Libro"
             val title = URLDecoder.decode(rawTitle, "UTF-8")
-
             val encodedUri = backStackEntry.arguments?.getString("fileUri")
             val fileUri = if (encodedUri.isNullOrEmpty()) null else URLDecoder.decode(encodedUri, "UTF-8")
 
             ReadingScreen(
                 bookTitle = title,
-                fileUriString = fileUri, // ¡Ahora sí recibe la ruta intacta!
+                fileUriString = fileUri,
                 initialProgress = 0f,
                 onNavigateBack = { navController.popBackStack() },
                 onAddNote = { },
@@ -80,16 +102,27 @@ fun AppNavigation() {
             )
         }
 
-        // 4. PANTALLA DE NOTAS Y CITAS
         composable(Screen.Notes.route) { backStackEntry ->
             val title = backStackEntry.arguments?.getString("bookTitle") ?: "Libro"
+            val bookId = backStackEntry.arguments?.getString("bookId")?.toLongOrNull() ?: 0L
+
+            val notes by notesViewModel.notes.collectAsState()
+            val quotes by notesViewModel.quotes.collectAsState()
+
+            // Cargamos los datos de este libro específico
+            androidx.compose.runtime.LaunchedEffect(bookId) {
+                notesViewModel.loadNotesAndQuotes(bookId)
+            }
+
             NotesAndQuotesScreen(
                 bookTitle = title,
-                notes = emptyList(), // Lista temporal
-                quotes = emptyList(), // Lista temporal
+                notes = notes,
+                quotes = quotes,
                 onNavigateBack = { navController.popBackStack() },
-                onEditNote = {}, onDeleteNote = {},
-                onEditQuote = {}, onDeleteQuote = {}
+                onEditNote = { /* TODO */ },
+                onDeleteNote = { notesViewModel.deleteNote(it) },
+                onEditQuote = { /* TODO */ },
+                onDeleteQuote = { notesViewModel.deleteQuote(it) }
             )
         }
     }
