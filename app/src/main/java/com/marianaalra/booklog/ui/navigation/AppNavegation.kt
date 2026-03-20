@@ -26,6 +26,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.ui.unit.dp
 
 @Composable
@@ -74,16 +75,22 @@ fun AppNavigation() {
             )
         }
 
+        //Version1
         composable(Screen.Home.route) {
             val currentUser by authViewModel.currentUser.collectAsState()
+
+            // 👇 Mostramos un loading mientras el usuario carga
+            // en vez de redirigir inmediatamente
             if (currentUser == null) {
-                androidx.compose.runtime.LaunchedEffect(Unit) {
-                    navController.navigate(Screen.Login.route) {
-                        popUpTo(0) { inclusive = true }
-                    }
+                androidx.compose.foundation.layout.Box(
+                    modifier = androidx.compose.ui.Modifier.fillMaxSize(),
+                    contentAlignment = androidx.compose.ui.Alignment.Center
+                ) {
+                    androidx.compose.material3.CircularProgressIndicator()
                 }
                 return@composable
             }
+
             MainScreenWithDrawer(
                 bookViewModel = bookViewModel,
                 usuarioId = currentUser!!.id,
@@ -106,17 +113,11 @@ fun AppNavigation() {
             val rawTitle = backStackEntry.arguments?.getString("bookTitle") ?: "Libro"
             val title = URLDecoder.decode(rawTitle, "UTF-8")
             val encodedUri = backStackEntry.arguments?.getString("fileUri")
-            val fileUri = if (encodedUri.isNullOrEmpty()) null else URLDecoder.decode(encodedUri, "UTF-8")
+            val fileUri = URLDecoder.decode(encodedUri, "UTF-8").ifBlank { null }
             val bookId = backStackEntry.arguments?.getString("bookId")?.toLongOrNull() ?: 0L
 
             val books by bookViewModel.books.collectAsState()
             val currentBook = books.find { it.id == bookId }  // 👈 NUEVO
-            val currentUser by authViewModel.currentUser.collectAsState()
-            LaunchedEffect(currentUser?.id) {
-                currentUser?.id?.let { userId ->
-                    if (userId != 0L) bookViewModel.loadBooks(userId)
-                }
-            }
 
             ReadingScreen(
                 bookTitle = title,

@@ -1,6 +1,7 @@
 package com.marianaalra.booklog.ui.feature.reading
 
 import java.io.File
+import androidx.activity.compose.BackHandler
 import java.io.FileOutputStream
 import java.io.InputStream
 import android.os.ParcelFileDescriptor
@@ -80,6 +81,7 @@ fun ReadingScreen(
 ) {
     var currentProgress by remember { mutableFloatStateOf(initialProgress) }
     var sliderProgress by remember { mutableFloatStateOf(initialProgress) }
+    var isNavigatingBack by remember { mutableStateOf(false) }
     LaunchedEffect(currentBook?.progress) {
         currentBook?.progress?.let { savedProgress ->
             sliderProgress = savedProgress
@@ -169,6 +171,12 @@ fun ReadingScreen(
         )
     }
 
+    BackHandler {
+        if (!isNavigatingBack) {
+            isNavigatingBack = true
+            onNavigateBack()
+        }
+    }
     Scaffold(
         topBar = {
             TopAppBar(
@@ -176,7 +184,16 @@ fun ReadingScreen(
                     Text(text = bookTitle, maxLines = 1, overflow = TextOverflow.Ellipsis, style = MaterialTheme.typography.titleMedium)
                 },
                 navigationIcon = {
-                    IconButton(onClick = onNavigateBack) { Icon(Icons.AutoMirrored.Filled.ArrowBack, "Regresar") }
+                    IconButton(
+                        onClick = {
+                            if (!isNavigatingBack) {
+                                isNavigatingBack = true
+                                onNavigateBack()
+                            }
+                        }
+                    ) {
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, "Regresar")
+                    }
                 },
                 actions = {
                     IconButton(onClick = { }) { Icon(Icons.Outlined.BookmarkBorder, "Marcador") }
