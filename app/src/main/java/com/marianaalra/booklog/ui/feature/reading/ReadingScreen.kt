@@ -81,6 +81,19 @@ fun ReadingScreen(
 ) {
     var currentProgress by remember { mutableFloatStateOf(initialProgress) }
     var sliderProgress by remember { mutableFloatStateOf(initialProgress) }
+
+    LaunchedEffect(sliderProgress) {
+        // Guardamos el progreso automáticamente cuando cambia por scroll
+        // con un pequeño delay para no saturar la BD
+        kotlinx.coroutines.delay(500)
+        currentBook?.let { book ->
+            if (sliderProgress != book.progress) {
+                bookViewModel?.updateBook(book.copy(progress = sliderProgress))
+            }
+        }
+    }
+    // Justo después de donde declaras sliderProgress, agrega:
+    var totalPages by remember { mutableIntStateOf(0) }
     var isNavigatingBack by remember { mutableStateOf(false) }
     LaunchedEffect(currentBook?.progress) {
         currentBook?.progress?.let { savedProgress ->
@@ -240,11 +253,17 @@ fun ReadingScreen(
         // 👇 AQUÍ CARGAMOS EL LECTOR DE PDF
         Box(modifier = Modifier.fillMaxSize().padding(paddingValues)) {
             if (fileUriString != null) {
-                PdfViewer(fileUri = Uri.fromFile(File(fileUriString)))
-            } else {
-                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                    Text("No se pudo cargar el archivo.")
-                }
+                PdfViewer(
+                    fileUri = Uri.fromFile(File(fileUriString)),
+                    onPageCountLoaded = { count ->
+                        if (totalPages == 0) totalPages = count  // solo la primera vez
+                    },
+                    onPageVisible = { visiblePage ->            // 👈 página actual visible
+                        if (totalPages > 0) {
+                            sliderProgress = visiblePage.toFloat() / totalPages.toFloat()
+                        }
+                    }
+                )
             }
         }
     }
@@ -254,7 +273,10 @@ fun ReadingScreen(
 // MOTOR NATIVO DE LECTURA DE PDF PARA JETPACK COMPOSE
 // ====================================================================
 @Composable
-fun PdfViewer(fileUri: Uri, modifier: Modifier = Modifier) {
+fun PdfViewer(fileUri: Uri,
+              onPageCountLoaded: (Int) -> Unit = {},
+              onPageVisible: (Int) -> Unit = {},
+              modifier: Modifier = Modifier) {
     val context = LocalContext.current
     var pdfRenderer by remember { mutableStateOf<PdfRenderer?>(null) }
     var pageCount by remember { mutableIntStateOf(0) }
@@ -265,23 +287,17 @@ fun PdfViewer(fileUri: Uri, modifier: Modifier = Modifier) {
     LaunchedEffect(fileUri) {
         withContext(Dispatchers.IO) {
             try {
-                // 👇 Ahora abrimos directamente como File, sin ContentResolver
                 val file = File(fileUri.path ?: return@withContext)
-
                 if (!file.exists() || file.length() == 0L) {
                     errorLoading = true
                     return@withContext
                 }
-
-                val fileDescriptor = ParcelFileDescriptor.open(
-                    file,
-                    ParcelFileDescriptor.MODE_READ_ONLY
-                )
+                val fileDescriptor = ParcelFileDescriptor.
+                open(file, ParcelFileDescriptor.MODE_READ_ONLY)
                 pdfRenderer = PdfRenderer(fileDescriptor)
                 pageCount = pdfRenderer?.pageCount ?: 0
-
                 if (pageCount == 0) errorLoading = true
-
+                else onPageCountLoaded(pageCount)  // 👈 NUEVO: notifica el total de páginas
             } catch (e: Exception) {
                 android.util.Log.e("PdfViewer", "Error: ${e.message}", e)
                 errorLoading = true
@@ -298,7 +314,16 @@ fun PdfViewer(fileUri: Uri, modifier: Modifier = Modifier) {
             Text("Error al cargar el PDF. El archivo puede estar corrupto o protegido.", color = MaterialTheme.colorScheme.error)
         }
     } else if (pdfRenderer != null) {
-        LazyColumn(modifier = modifier.fillMaxSize()) {
+        val listState = androidx.compose.foundation.lazy.rememberLazyListState()
+
+        LaunchedEffect(listState.firstVisibleItemIndex) {
+            onPageVisible(listState.firstVisibleItemIndex + 1)  // +1 porque empieza en 0
+        }
+
+        LazyColumn(
+            state = listState,
+            modifier = modifier.fillMaxSize()
+        ) {
             items(pageCount) { index ->
                 PdfPage(pdfRenderer = pdfRenderer!!, pageIndex = index, renderMutex = renderMutex)
                 Spacer(modifier = Modifier.height(8.dp))

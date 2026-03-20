@@ -125,6 +125,14 @@ fun AppNavigation() {
             val books by bookViewModel.books.collectAsState()
             val currentBook = books.find { it.id == bookId }  // 👈 NUEVO
 
+            LaunchedEffect(currentBook) {
+                currentBook?.let { book ->
+                    if (book.status == "PENDIENTE") {
+                        bookViewModel.updateBook(book.copy(status = "EN_PROGRESO"))
+                    }
+                }
+            }
+
             ReadingScreen(
                 bookTitle = title,
                 fileUriString = fileUri,
