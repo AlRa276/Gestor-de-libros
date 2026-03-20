@@ -1,6 +1,7 @@
 package com.marianaalra.booklog.data.local.dao
 
 import androidx.room.*
+import com.marianaalra.booklog.data.local.entity.BookEntity
 import com.marianaalra.booklog.data.local.entity.ColeccionEntity
 import com.marianaalra.booklog.data.local.entity.LecturaColeccionEntity
 import kotlinx.coroutines.flow.Flow
@@ -24,6 +25,13 @@ interface ColeccionDao {
 
     @Query("DELETE FROM lecturas_colecciones WHERE lecturaId = :bookId")
     suspend fun deleteAllColeccionesForBook(bookId: Long)
+
+    @Query("""
+    SELECT lecturas.* FROM lecturas 
+    INNER JOIN lecturas_colecciones ON lecturas.id = lecturas_colecciones.lecturaId 
+    WHERE lecturas_colecciones.coleccionId = :coleccionId
+""")
+    fun getBooksForColeccion(coleccionId: Long): Flow<List<BookEntity>>
 
     @Delete
     suspend fun deleteLecturaColeccion(relacion: LecturaColeccionEntity)

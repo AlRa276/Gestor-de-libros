@@ -31,4 +31,13 @@ class ColeccionRepositoryImpl(private val dao: ColeccionDao) : ColeccionReposito
 
     override suspend fun deleteColeccion(coleccion: ColeccionDomain) =
         dao.deleteColeccion(coleccion.toEntity())
+
+    // ... dentro de ColeccionRepositoryImpl
+
+    override fun getBooksForColeccion(coleccionId: Long): Flow<List<com.marianaalra.booklog.domain.model.Book>> {
+        return dao.getBooksForColeccion(coleccionId).map { entities ->
+            entities.map { it.toDomain() } // Usamos el mapper que ya tienes para Book
+        }
+    }
+
 }

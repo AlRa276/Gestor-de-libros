@@ -12,8 +12,18 @@ class ViewModelFactory(private val app: BookLogApp) : ViewModelProvider.Factory 
             modelClass.isAssignableFrom(AuthViewModel::class.java) ->
                 AuthViewModel(app.loginUseCase, app.registerUseCase, app.logoutUseCase) as T
 
+            // ... dentro del when de tu ViewModelFactory
+
             modelClass.isAssignableFrom(BookViewModel::class.java) ->
-                BookViewModel(app.getBooksUseCase, app.addBookUseCase, app.updateBookUseCase) as T
+                BookViewModel(
+                    app.getBooksUseCase,
+                    app.addBookUseCase,
+                    app.updateBookUseCase,
+                    app.serieRepository,
+                    app.coleccionRepository// 👈 Agregamos esta línea que faltaba
+                ) as T
+
+// ... el resto sigue igual
 
             modelClass.isAssignableFrom(NotesViewModel::class.java) ->
                 NotesViewModel(
@@ -28,9 +38,6 @@ class ViewModelFactory(private val app: BookLogApp) : ViewModelProvider.Factory 
                     app.serieRepository,
                     app.coleccionRepository
                 ) as T
-
-            modelClass.isAssignableFrom(StatisticsViewModel::class.java) ->
-                StatisticsViewModel(app.getBooksUseCase) as T
 
             else -> throw IllegalArgumentException("ViewModel desconocido: ${modelClass.name}")
         }

@@ -10,4 +10,8 @@ interface ColeccionRepository {
     suspend fun setColeccionesForBook(bookId: Long, colecciones: List<ColeccionDomain>)
     suspend fun insertColeccion(coleccion: ColeccionDomain): Long
     suspend fun deleteColeccion(coleccion: ColeccionDomain)
+
+    // ... dentro de interface ColeccionRepository
+    fun getBooksForColeccion(coleccionId: Long): Flow<List<com.marianaalra.booklog.domain.model.Book>>
+
 }

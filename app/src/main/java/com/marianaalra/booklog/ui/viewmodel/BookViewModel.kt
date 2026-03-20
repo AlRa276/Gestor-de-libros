@@ -3,21 +3,35 @@ package com.marianaalra.booklog.ui.viewmodel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.marianaalra.booklog.domain.model.Book
+import com.marianaalra.booklog.domain.model.SerieDomain
+import com.marianaalra.booklog.domain.model.ColeccionDomain // 👈 1. Importa tu modelo de Colección
+import com.marianaalra.booklog.domain.repository.SerieRepository
+import com.marianaalra.booklog.domain.repository.ColeccionRepository // 👈 2. Importa el repositorio
 import com.marianaalra.booklog.domain.usecase.book.AddBookUseCase
 import com.marianaalra.booklog.domain.usecase.book.GetBooksUseCase
 import com.marianaalra.booklog.domain.usecase.book.UpdateBookUseCase
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.Flow // 👈 Para la función de filtrado
 import kotlinx.coroutines.launch
 
 class BookViewModel(
     private val getBooksUseCase: GetBooksUseCase,
     private val addBookUseCase: AddBookUseCase,
-    private val updateBookUseCase: UpdateBookUseCase
+    private val updateBookUseCase: UpdateBookUseCase,
+    private val serieRepository: SerieRepository,
+    private val coleccionRepository: ColeccionRepository // 👈 3. Inyectamos el repositorio de colecciones
 ) : ViewModel() {
 
     private val _books = MutableStateFlow<List<Book>>(emptyList())
     val books: StateFlow<List<Book>> = _books
+
+    private val _series = MutableStateFlow<List<SerieDomain>>(emptyList())
+    val series: StateFlow<List<SerieDomain>> = _series
+
+    // --- ESTADO PARA COLECCIONES ---
+    private val _colecciones = MutableStateFlow<List<ColeccionDomain>>(emptyList()) // 👈 4. Estado de colecciones
+    val colecciones: StateFlow<List<ColeccionDomain>> = _colecciones
 
     fun loadBooks(usuarioId: Long) {
         viewModelScope.launch {
@@ -27,15 +41,36 @@ class BookViewModel(
         }
     }
 
+    fun loadSeries(usuarioId: Long) {
+        viewModelScope.launch {
+            serieRepository.getSeriesForUser(usuarioId).collect { listaSeries ->
+                _series.value = listaSeries
+            }
+        }
+    }
+
+    // --- CARGAR COLECCIONES ---
+    fun loadColecciones(usuarioId: Long) { // 👈 5. Función para cargar etiquetas
+        viewModelScope.launch {
+            coleccionRepository.getColeccionesForUser(usuarioId).collect { lista ->
+                _colecciones.value = lista
+            }
+        }
+    }
+
+    // --- OBTENER LIBROS POR COLECCIÓN ---
+    // Esta función la usaremos en la UI para filtrar dinámicamente
+    fun getBooksByColeccion(coleccionId: Long): Flow<List<Book>> { // 👈 6. Filtrado reactivo
+        return coleccionRepository.getBooksForColeccion(coleccionId)
+    }
+
     fun addBook(book: Book) {
         viewModelScope.launch {
             try {
                 android.util.Log.d("BookViewModel", "Guardando libro: ${book.title}, usuarioId: ${book.usuarioId}")
                 addBookUseCase(book)
-                android.util.Log.d("BookViewModel", "Libro guardado exitosamente")
             } catch (e: Exception) {
                 android.util.Log.e("BookViewModel", "Error al guardar: ${e.message}", e)
-                e.printStackTrace()
             }
         }
     }
@@ -45,5 +80,4 @@ class BookViewModel(
             try { updateBookUseCase(book) } catch (e: Exception) { e.printStackTrace() }
         }
     }
-
 }
