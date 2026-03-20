@@ -10,9 +10,11 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.outlined.Book
@@ -144,6 +146,7 @@ fun MainScreenWithDrawer(
                     selected = selectedItem == "Biblioteca",
                     onClick = {
                         selectedItem = "Biblioteca"
+                        searchQuery = ""
                         scope.launch { drawerState.close() }
                     },
                     modifier = Modifier.padding(NavigationDrawerItemDefaults.ItemPadding)
@@ -154,6 +157,7 @@ fun MainScreenWithDrawer(
                     selected = selectedItem == "Pendientes",
                     onClick = {
                         selectedItem = "Pendientes"
+                        searchQuery = ""
                         scope.launch { drawerState.close() }
                     },
                     modifier = Modifier.padding(NavigationDrawerItemDefaults.ItemPadding)
@@ -164,6 +168,7 @@ fun MainScreenWithDrawer(
                     selected = selectedItem == "En progreso",
                     onClick = {
                         selectedItem = "En progreso"
+                        searchQuery = ""
                         scope.launch { drawerState.close() }
                     },
                     modifier = Modifier.padding(NavigationDrawerItemDefaults.ItemPadding)
@@ -174,6 +179,7 @@ fun MainScreenWithDrawer(
                     selected = selectedItem == "Finalizadas",
                     onClick = {
                         selectedItem = "Finalizadas"
+                        searchQuery = ""
                         scope.launch { drawerState.close() }
                     },
                     modifier = Modifier.padding(NavigationDrawerItemDefaults.ItemPadding)
@@ -187,6 +193,7 @@ fun MainScreenWithDrawer(
                     selected = selectedItem == "Series",
                     onClick = {
                         selectedItem = "Series"
+                        searchQuery = ""
                         scope.launch { drawerState.close() }
                     },
                     modifier = Modifier.padding(NavigationDrawerItemDefaults.ItemPadding)
@@ -197,6 +204,7 @@ fun MainScreenWithDrawer(
                     selected = selectedItem == "Autores",
                     onClick = {
                         selectedItem = "Autores"
+                        searchQuery = ""
                         scope.launch { drawerState.close() }
                     },
                     modifier = Modifier.padding(NavigationDrawerItemDefaults.ItemPadding)
@@ -207,6 +215,7 @@ fun MainScreenWithDrawer(
                     selected = selectedItem == "Etiquetas",
                     onClick = {
                         selectedItem = "Etiquetas"
+                        searchQuery = ""
                         scope.launch { drawerState.close() }
                     },
                     modifier = Modifier.padding(NavigationDrawerItemDefaults.ItemPadding)
@@ -236,6 +245,13 @@ fun MainScreenWithDrawer(
             "En progreso" -> books.filter { it.status == "EN_PROGRESO" }
             "Finalizadas" -> books.filter { it.status == "FINALIZADA" }
             else -> emptyList()
+        }.let { lista ->
+            // 👇 Aplica el filtro de búsqueda encima del filtro de estado
+            if (searchQuery.isBlank()) lista
+            else lista.filter { book ->
+                book.title.contains(searchQuery, ignoreCase = true) ||
+                        book.author?.contains(searchQuery, ignoreCase = true) == true
+            }
         }
 
         Scaffold(
@@ -251,6 +267,16 @@ fun MainScreenWithDrawer(
                                 .height(52.dp),
                             placeholder = { Text("Buscar...", style = MaterialTheme.typography.bodyMedium) },
                             leadingIcon = { Icon(Icons.Default.Search, contentDescription = "Icono de búsqueda") },
+                            trailingIcon = {                                    // 👈 AGREGA ESTO
+                                if (searchQuery.isNotBlank()) {
+                                    IconButton(onClick = { searchQuery = "" }) {
+                                        Icon(
+                                            imageVector = Icons.Default.Close,
+                                            contentDescription = "Limpiar búsqueda"
+                                        )
+                                    }
+                                }
+                            },
                             shape = RoundedCornerShape(50),
                             singleLine = true,
                             colors = OutlinedTextFieldDefaults.colors(
@@ -297,23 +323,49 @@ fun MainScreenWithDrawer(
 
                 Spacer(modifier = Modifier.height(16.dp))
 
-                BookListSection(
-                    booksToShow = filteredBooks,
-                    onNavigateToReading = onNavigateToReading,
-
-                    onNavigateToNotes = { title ->
-                        val book = books.find { it.title == title }
-                        onNavigateToNotes(title, book?.id ?: 0L)
-                    },
-                    onStatusChange = { book, newStatus ->      // 👈 NUEVO
-                        bookViewModel.updateBook(book.copy(status = newStatus))
-                    },
-                    onEditClick = { book: Book ->    // 👈 AGREGA con tipo explícito
-                        onNavigateToEdit(book.id)
+                //VersionANterior
+                if (filteredBooks.isEmpty()) {
+                    androidx.compose.foundation.layout.Box(
+                        modifier = Modifier.fillMaxSize(),
+                        contentAlignment = androidx.compose.ui.Alignment.Center
+                    ) {
+                        androidx.compose.foundation.layout.Column(
+                            horizontalAlignment = androidx.compose.ui.Alignment.CenterHorizontally,
+                            verticalArrangement = androidx.compose.foundation.layout.Arrangement.spacedBy(8.dp)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Search,
+                                contentDescription = null,
+                                modifier = Modifier.size(48.dp),
+                                tint = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.3f)
+                            )
+                            Text(
+                                text = if (searchQuery.isNotBlank())
+                                    "No se encontraron libros para \"$searchQuery\""
+                                else
+                                    "No hay libros en esta categoría",
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.5f),
+                                textAlign = androidx.compose.ui.text.style.TextAlign.Center
+                            )
+                        }
                     }
-
-
-                )
+                } else {
+                    BookListSection(
+                        booksToShow = filteredBooks,
+                        onNavigateToReading = onNavigateToReading,
+                        onNavigateToNotes = { title ->
+                            val book = books.find { it.title == title }
+                            onNavigateToNotes(title, book?.id ?: 0L)
+                        },
+                        onStatusChange = { book: Book, newStatus: String ->
+                            bookViewModel.updateBook(book.copy(status = newStatus))
+                        },
+                        onEditClick = { book: Book ->
+                            onNavigateToEdit(book.id)
+                        }
+                    )
+                }
             }
         }
     }
