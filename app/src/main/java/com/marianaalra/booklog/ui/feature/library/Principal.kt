@@ -17,6 +17,7 @@ import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.outlined.BarChart
 import androidx.compose.material.icons.outlined.Book
 import androidx.compose.material.icons.outlined.BookmarkBorder
 import androidx.compose.material.icons.outlined.CheckCircle
@@ -72,6 +73,7 @@ fun MainScreenWithDrawer(
     onNavigateToReading: (String, String?) -> Unit = { _: String, _: String? -> },
     onNavigateToNotes: (String, Long) -> Unit = { _: String, _: Long -> },          // 👈 tipos explícitos
     onNavigateToEdit: (Long) -> Unit = {},
+    onNavigateToStatistics: () -> Unit = {},
     onLogout: () -> Unit = {}
 ){
     val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
@@ -217,6 +219,18 @@ fun MainScreenWithDrawer(
                         selectedItem = "Etiquetas"
                         searchQuery = ""
                         scope.launch { drawerState.close() }
+                    },
+                    modifier = Modifier.padding(NavigationDrawerItemDefaults.ItemPadding)
+                )
+
+                NavigationDrawerItem(
+                    icon = { Icon(Icons.Outlined.BarChart, contentDescription = null) },
+                    label = { Text("Estadísticas") },
+                    selected = selectedItem == "Estadísticas",
+                    onClick = {
+                        selectedItem = "Estadísticas"
+                        scope.launch { drawerState.close() }
+                        onNavigateToStatistics()  // callback nuevo
                     },
                     modifier = Modifier.padding(NavigationDrawerItemDefaults.ItemPadding)
                 )

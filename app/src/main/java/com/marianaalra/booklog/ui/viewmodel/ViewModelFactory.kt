@@ -29,6 +29,9 @@ class ViewModelFactory(private val app: BookLogApp) : ViewModelProvider.Factory 
                     app.coleccionRepository
                 ) as T
 
+            modelClass.isAssignableFrom(StatisticsViewModel::class.java) ->
+                StatisticsViewModel(app.getBooksUseCase) as T
+
             else -> throw IllegalArgumentException("ViewModel desconocido: ${modelClass.name}")
         }
     }
