@@ -267,6 +267,7 @@ fun MainScreenWithDrawer(
                                 .height(52.dp),
                             placeholder = { Text("Buscar...", style = MaterialTheme.typography.bodyMedium) },
                             leadingIcon = { Icon(Icons.Default.Search, contentDescription = "Icono de búsqueda") },
+                            textStyle = MaterialTheme.typography.bodyMedium,
                             trailingIcon = {                                    // 👈 AGREGA ESTO
                                 if (searchQuery.isNotBlank()) {
                                     IconButton(onClick = { searchQuery = "" }) {
