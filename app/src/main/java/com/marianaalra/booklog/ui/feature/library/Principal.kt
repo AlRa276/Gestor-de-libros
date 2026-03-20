@@ -14,7 +14,6 @@ import androidx.compose.material.icons.outlined.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import com.marianaalra.booklog.domain.model.Book
@@ -42,7 +41,7 @@ fun MainScreenWithDrawer(
     var selectedItem by remember { mutableStateOf("Biblioteca") }
     var searchQuery by remember { mutableStateOf("") }
 
-    // Subniveles
+    // Estados para subniveles de navegación
     var selectedAuthor by remember { mutableStateOf<String?>(null) }
     var selectedSerieId by remember { mutableStateOf<Long?>(null) }
     var selectedColeccionId by remember { mutableStateOf<Long?>(null) }
@@ -51,6 +50,7 @@ fun MainScreenWithDrawer(
     val series by bookViewModel.series.collectAsState()
     val colecciones by bookViewModel.colecciones.collectAsState()
 
+    // Filtrado reactivo por etiqueta
     val booksByColeccion by if (selectedItem == "Etiquetas" && selectedColeccionId != null) {
         bookViewModel.getBooksByColeccion(selectedColeccionId!!).collectAsState(initial = emptyList())
     } else {
@@ -78,21 +78,18 @@ fun MainScreenWithDrawer(
                 val internalPath = copyPdfToInternalStorage(context, uri)
                 if (internalPath != null) {
                     val coverPath = extractPdfCover(context, internalPath)
-
                     val nombreReal = context.contentResolver
                         .query(uri, null, null, null, null)
                         ?.use { cursor ->
                             val nameIndex = cursor.getColumnIndex(android.provider.OpenableColumns.DISPLAY_NAME)
                             cursor.moveToFirst()
                             cursor.getString(nameIndex)
-                        } ?: "Nuevo Documento.pdf"
-
-                    val titulo = nombreReal.substringBeforeLast(".")
+                        } ?: "Libro.pdf"
 
                     bookViewModel.addBook(
                         Book(
                             usuarioId = usuarioId,
-                            title = titulo,
+                            title = nombreReal.substringBeforeLast("."),
                             fileFormat = "pdf",
                             fileUri = internalPath,
                             nombreArchivo = nombreReal,
@@ -108,15 +105,8 @@ fun MainScreenWithDrawer(
         drawerState = drawerState,
         drawerContent = {
             ModalDrawerSheet {
-
                 Spacer(Modifier.height(16.dp))
-
-                Text(
-                    text = "BookLog",
-                    modifier = Modifier.padding(28.dp),
-                    style = MaterialTheme.typography.titleLarge
-                )
-
+                Text("BookLog", modifier = Modifier.padding(28.dp), style = MaterialTheme.typography.titleLarge)
                 HorizontalDivider()
 
                 val menuOptions = listOf(
@@ -126,7 +116,8 @@ fun MainScreenWithDrawer(
                     "Finalizadas" to Icons.Outlined.CheckCircle,
                     "Series" to Icons.Outlined.LibraryBooks,
                     "Autores" to Icons.Outlined.Person,
-                    "Etiquetas" to Icons.Outlined.Label
+                    "Etiquetas" to Icons.Outlined.Label,
+                    "Estadísticas" to Icons.Outlined.BarChart
                 )
 
                 menuOptions.forEach { (label, icon) ->
@@ -135,28 +126,27 @@ fun MainScreenWithDrawer(
                         label = { Text(label) },
                         selected = selectedItem == label,
                         onClick = {
-                            selectedItem = label
-                            searchQuery = ""
+                            if (label == "Estadísticas") {
+                                onNavigateToStatistics()
+                            } else {
+                                selectedItem = label
+                                searchQuery = ""
+                            }
                             scope.launch { drawerState.close() }
                         }
                     )
                 }
-
                 Spacer(modifier = Modifier.weight(1f))
-
                 NavigationDrawerItem(
                     icon = { Icon(Icons.Outlined.Logout, null) },
                     label = { Text("Cerrar sesión") },
                     selected = false,
-                    onClick = {
-                        scope.launch { drawerState.close() }
-                        onLogout()
-                    }
+                    onClick = { scope.launch { drawerState.close() }; onLogout() }
                 )
             }
         }
     ) {
-
+        // Lógica de filtrado de libros según la sección activa
         val filteredBooks = when (selectedItem) {
             "Biblioteca" -> books
             "Pendientes" -> books.filter { it.status == "PENDIENTE" }
@@ -166,9 +156,7 @@ fun MainScreenWithDrawer(
             "Series" -> if (selectedSerieId != null) books.filter { it.serieId == selectedSerieId } else emptyList()
             "Etiquetas" -> booksByColeccion
             else -> emptyList()
-        }.filter {
-            it.title.contains(searchQuery, true)
-        }
+        }.filter { it.title.contains(searchQuery, true) }
 
         Scaffold(
             topBar = {
@@ -177,7 +165,7 @@ fun MainScreenWithDrawer(
                         OutlinedTextField(
                             value = searchQuery,
                             onValueChange = { searchQuery = it },
-                            modifier = Modifier.fillMaxWidth(),
+                            modifier = Modifier.fillMaxWidth().padding(end = 8.dp),
                             placeholder = { Text("Buscar...") },
                             leadingIcon = { Icon(Icons.Default.Search, null) },
                             shape = RoundedCornerShape(50),
@@ -195,58 +183,76 @@ fun MainScreenWithDrawer(
                         }) {
                             Icon(
                                 if (selectedAuthor != null || selectedSerieId != null || selectedColeccionId != null)
-                                    Icons.Default.ArrowBack else Icons.Default.Menu,
-                                null
+                                    Icons.Default.ArrowBack else Icons.Default.Menu, null
                             )
                         }
                     }
                 )
             },
             floatingActionButton = {
-                FloatingActionButton(
-                    onClick = {
-                        filePickerLauncher.launch(arrayOf("application/pdf"))
-                    }
-                ) {
+                FloatingActionButton(onClick = { filePickerLauncher.launch(arrayOf("application/pdf")) }) {
                     Icon(Icons.Default.Add, null)
                 }
             }
         ) { padding ->
+            Column(modifier = Modifier.fillMaxSize().padding(padding).padding(16.dp)) {
 
-            Column(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(padding)
-                    .padding(16.dp)
-            ) {
-
-                val title = when {
-                    selectedAuthor != null -> "Libros de $selectedAuthor"
-                    selectedSerieId != null -> "Serie"
-                    selectedColeccionId != null -> "Colección"
+                val currentTitle = when {
+                    selectedAuthor != null -> "Autor: $selectedAuthor"
+                    selectedSerieId != null -> "Serie: ${series.find { it.id == selectedSerieId }?.nombre ?: ""}"
+                    selectedColeccionId != null -> "Etiqueta: ${colecciones.find { it.id == selectedColeccionId }?.nombre ?: ""}"
                     else -> selectedItem
                 }
-
-                Text(title, style = MaterialTheme.typography.headlineMedium)
-
+                Text(currentTitle, style = MaterialTheme.typography.headlineMedium)
                 Spacer(Modifier.height(16.dp))
 
                 when {
+                    // SECCIÓN AUTORES
                     selectedItem == "Autores" && selectedAuthor == null -> {
-                        val authors = books.mapNotNull { it.author }.distinct()
-
+                        val authors = books.mapNotNull { it.author }.distinct().filter { it.isNotBlank() }
                         LazyColumn {
-                            items(authors) {
+                            items(authors) { author ->
                                 ListItem(
-                                    headlineContent = { Text(it) },
-                                    modifier = Modifier.clickable {
-                                        selectedAuthor = it
-                                    }
+                                    headlineContent = { Text(author) },
+                                    leadingContent = { Icon(Icons.Default.Person, null) },
+                                    modifier = Modifier.clickable { selectedAuthor = author }
                                 )
+                                HorizontalDivider()
                             }
                         }
                     }
 
+                    // SECCIÓN SERIES
+                    selectedItem == "Series" && selectedSerieId == null -> {
+                        if (series.isEmpty()) Text("No hay series creadas.")
+                        LazyColumn {
+                            items(series) { serie ->
+                                ListItem(
+                                    headlineContent = { Text(serie.nombre) },
+                                    leadingContent = { Icon(Icons.Default.LibraryBooks, null) },
+                                    modifier = Modifier.clickable { selectedSerieId = serie.id }
+                                )
+                                HorizontalDivider()
+                            }
+                        }
+                    }
+
+                    // SECCIÓN ETIQUETAS
+                    selectedItem == "Etiquetas" && selectedColeccionId == null -> {
+                        if (colecciones.isEmpty()) Text("No hay etiquetas creadas.")
+                        LazyColumn {
+                            items(colecciones) { col ->
+                                ListItem(
+                                    headlineContent = { Text(col.nombre) },
+                                    leadingContent = { Icon(Icons.Default.Label, null) },
+                                    modifier = Modifier.clickable { selectedColeccionId = col.id }
+                                )
+                                HorizontalDivider()
+                            }
+                        }
+                    }
+
+                    // VISTA DE LIBROS
                     else -> {
                         BookListSection(
                             booksToShow = filteredBooks,
