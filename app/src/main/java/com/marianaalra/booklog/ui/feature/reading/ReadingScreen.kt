@@ -94,6 +94,14 @@ fun ReadingScreen(
     }
     // Justo después de donde declaras sliderProgress, agrega:
     var totalPages by remember { mutableIntStateOf(0) }
+    var initialPageToScroll by remember { mutableIntStateOf(0) }
+
+// Cuando sabemos el total de páginas, calculamos la página inicial
+    LaunchedEffect(totalPages) {
+        if (totalPages > 0 && initialPageToScroll == 0) {
+            initialPageToScroll = (initialProgress * totalPages).toInt().coerceIn(0, totalPages - 1)
+        }
+    }
     var isNavigatingBack by remember { mutableStateOf(false) }
     LaunchedEffect(currentBook?.progress) {
         currentBook?.progress?.let { savedProgress ->
@@ -187,6 +195,9 @@ fun ReadingScreen(
     BackHandler {
         if (!isNavigatingBack) {
             isNavigatingBack = true
+            currentBook?.let { book ->
+                bookViewModel?.updateBook(book.copy(progress = sliderProgress))
+            }
             onNavigateBack()
         }
     }
@@ -201,6 +212,9 @@ fun ReadingScreen(
                         onClick = {
                             if (!isNavigatingBack) {
                                 isNavigatingBack = true
+                                currentBook?.let { book ->
+                                    bookViewModel?.updateBook(book.copy(progress = sliderProgress))
+                                }
                                 onNavigateBack()
                             }
                         }
@@ -255,6 +269,7 @@ fun ReadingScreen(
             if (fileUriString != null) {
                 PdfViewer(
                     fileUri = Uri.fromFile(File(fileUriString)),
+                    initialPage = initialPageToScroll,
                     onPageCountLoaded = { count ->
                         if (totalPages == 0) totalPages = count  // solo la primera vez
                     },
@@ -274,6 +289,7 @@ fun ReadingScreen(
 // ====================================================================
 @Composable
 fun PdfViewer(fileUri: Uri,
+              initialPage: Int = 0,
               onPageCountLoaded: (Int) -> Unit = {},
               onPageVisible: (Int) -> Unit = {},
               modifier: Modifier = Modifier) {
@@ -315,6 +331,12 @@ fun PdfViewer(fileUri: Uri,
         }
     } else if (pdfRenderer != null) {
         val listState = androidx.compose.foundation.lazy.rememberLazyListState()
+
+        LaunchedEffect(initialPage) {
+            if (initialPage > 0 && pageCount > 0) {
+                listState.scrollToItem(initialPage)
+            }
+        }
 
         LaunchedEffect(listState.firstVisibleItemIndex) {
             onPageVisible(listState.firstVisibleItemIndex + 1)  // +1 porque empieza en 0

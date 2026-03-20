@@ -29,7 +29,9 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.ui.unit.dp
 import com.marianaalra.booklog.ui.feature.library.EditBookScreen
+import com.marianaalra.booklog.ui.feature.statistics.StatisticsScreen
 import com.marianaalra.booklog.ui.viewmodel.EditBookViewModel
+import com.marianaalra.booklog.ui.viewmodel.StatisticsViewModel
 
 @Composable
 fun AppNavigation() {
@@ -43,6 +45,7 @@ fun AppNavigation() {
     val bookViewModel: BookViewModel = viewModel(factory = factory)
     val notesViewModel: NotesViewModel = viewModel(factory = factory)
     val editBookViewModel: EditBookViewModel = viewModel(factory = factory)
+    val statisticsViewModel: StatisticsViewModel = viewModel(factory = factory)
 
     NavHost(navController = navController, startDestination = Screen.Login.route) {
 
@@ -112,6 +115,9 @@ fun AppNavigation() {
                 },
                 onNavigateToEdit = { bookId: Long ->    // 👈 AGREGA con tipo explícito
                     navController.navigate(Screen.EditBook.createRoute(bookId))
+                },
+                onNavigateToStatistics = {
+                    navController.navigate(Screen.Statistics.route)
                 },
                 onLogout = {
                     authViewModel.logout {
@@ -288,6 +294,15 @@ fun AppNavigation() {
 
                 )
             }
+        }
+
+        composable(Screen.Statistics.route) {
+            val currentUser by authViewModel.currentUser.collectAsState()
+            StatisticsScreen(
+                userId = currentUser?.id ?: 0L,
+                viewModel = statisticsViewModel,
+                onNavigateBack = { navController.popBackStack() }
+            )
         }
 
     }

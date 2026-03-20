@@ -17,6 +17,7 @@ import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.outlined.BarChart
 import androidx.compose.material.icons.outlined.Book
 import androidx.compose.material.icons.outlined.BookmarkBorder
 import androidx.compose.material.icons.outlined.CheckCircle
@@ -72,6 +73,7 @@ fun MainScreenWithDrawer(
     onNavigateToReading: (String, String?) -> Unit = { _: String, _: String? -> },
     onNavigateToNotes: (String, Long) -> Unit = { _: String, _: Long -> },          // 👈 tipos explícitos
     onNavigateToEdit: (Long) -> Unit = {},
+    onNavigateToStatistics: () -> Unit = {},
     onLogout: () -> Unit = {}
 ){
     val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
@@ -221,6 +223,18 @@ fun MainScreenWithDrawer(
                     modifier = Modifier.padding(NavigationDrawerItemDefaults.ItemPadding)
                 )
 
+                NavigationDrawerItem(
+                    icon = { Icon(Icons.Outlined.BarChart, contentDescription = null) },
+                    label = { Text("Estadísticas") },
+                    selected = selectedItem == "Estadísticas",
+                    onClick = {
+                        selectedItem = "Estadísticas"
+                        scope.launch { drawerState.close() }
+                        onNavigateToStatistics()  // callback nuevo
+                    },
+                    modifier = Modifier.padding(NavigationDrawerItemDefaults.ItemPadding)
+                )
+
                 Spacer(modifier = Modifier.weight(1f))
 
                 HorizontalDivider(modifier = Modifier.padding(horizontal = 28.dp, vertical = 8.dp))
@@ -267,6 +281,7 @@ fun MainScreenWithDrawer(
                                 .height(52.dp),
                             placeholder = { Text("Buscar...", style = MaterialTheme.typography.bodyMedium) },
                             leadingIcon = { Icon(Icons.Default.Search, contentDescription = "Icono de búsqueda") },
+                            textStyle = MaterialTheme.typography.bodyMedium,
                             trailingIcon = {                                    // 👈 AGREGA ESTO
                                 if (searchQuery.isNotBlank()) {
                                     IconButton(onClick = { searchQuery = "" }) {
