@@ -67,8 +67,9 @@ import com.marianaalra.booklog.utils.extractPdfCover
 fun MainScreenWithDrawer(
     bookViewModel: BookViewModel,
     usuarioId: Long,
-    onNavigateToReading: (String, String?) -> Unit = { _: String, _: String? -> },  // 👈 tipos explícitos
+    onNavigateToReading: (String, String?) -> Unit = { _: String, _: String? -> },
     onNavigateToNotes: (String, Long) -> Unit = { _: String, _: Long -> },          // 👈 tipos explícitos
+    onNavigateToEdit: (Long) -> Unit = {},
     onLogout: () -> Unit = {}
 ){
     val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
@@ -299,13 +300,19 @@ fun MainScreenWithDrawer(
                 BookListSection(
                     booksToShow = filteredBooks,
                     onNavigateToReading = onNavigateToReading,
+
                     onNavigateToNotes = { title ->
                         val book = books.find { it.title == title }
                         onNavigateToNotes(title, book?.id ?: 0L)
                     },
                     onStatusChange = { book, newStatus ->      // 👈 NUEVO
                         bookViewModel.updateBook(book.copy(status = newStatus))
+                    },
+                    onEditClick = { book: Book ->    // 👈 AGREGA con tipo explícito
+                        onNavigateToEdit(book.id)
                     }
+
+
                 )
             }
         }

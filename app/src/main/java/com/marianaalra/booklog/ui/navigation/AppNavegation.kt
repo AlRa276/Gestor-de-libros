@@ -28,6 +28,8 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.ui.unit.dp
+import com.marianaalra.booklog.ui.feature.library.EditBookScreen
+import com.marianaalra.booklog.ui.viewmodel.EditBookViewModel
 
 @Composable
 fun AppNavigation() {
@@ -40,6 +42,7 @@ fun AppNavigation() {
     val authViewModel: AuthViewModel = viewModel(factory = factory)
     val bookViewModel: BookViewModel = viewModel(factory = factory)
     val notesViewModel: NotesViewModel = viewModel(factory = factory)
+    val editBookViewModel: EditBookViewModel = viewModel(factory = factory)
 
     NavHost(navController = navController, startDestination = Screen.Login.route) {
 
@@ -100,6 +103,9 @@ fun AppNavigation() {
                 },
                 onNavigateToNotes = { bookTitle, bookId ->
                     navController.navigate(Screen.Notes.createRoute(bookTitle, bookId))
+                },
+                onNavigateToEdit = { bookId: Long ->    // 👈 AGREGA con tipo explícito
+                    navController.navigate(Screen.EditBook.createRoute(bookId))
                 },
                 onLogout = {
                     authViewModel.logout {
@@ -252,5 +258,23 @@ fun AppNavigation() {
                 onDeleteQuote = { notesViewModel.deleteQuote(it) }
             )
         }
+
+        composable(Screen.EditBook.route) { backStackEntry ->
+            val bookId = backStackEntry.arguments?.getString("bookId")?.toLongOrNull() ?: 0L
+            val books by bookViewModel.books.collectAsState()
+            val currentUser by authViewModel.currentUser.collectAsState()
+            val book = books.find { it.id == bookId }
+
+            if (book != null && currentUser != null) {
+                EditBookScreen(
+                    book = book,
+                    userId = currentUser!!.id,
+                    editBookViewModel = editBookViewModel,
+                    onNavigateBack = { navController.popBackStack() },
+
+                )
+            }
+        }
+
     }
 }

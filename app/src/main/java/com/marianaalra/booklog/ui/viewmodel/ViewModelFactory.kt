@@ -22,6 +22,13 @@ class ViewModelFactory(private val app: BookLogApp) : ViewModelProvider.Factory 
                     app.getQuotesUseCase, app.addQuoteUseCase, app.updateQuoteUseCase, app.deleteQuoteUseCase
                 ) as T
 
+            modelClass.isAssignableFrom(EditBookViewModel::class.java) ->
+                EditBookViewModel(
+                    app.updateBookUseCase,
+                    app.serieRepository,
+                    app.coleccionRepository
+                ) as T
+
             else -> throw IllegalArgumentException("ViewModel desconocido: ${modelClass.name}")
         }
     }

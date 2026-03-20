@@ -20,6 +20,8 @@ import com.marianaalra.booklog.domain.usecase.quote.AddQuoteUseCase
 import com.marianaalra.booklog.domain.usecase.quote.DeleteQuoteUseCase
 import com.marianaalra.booklog.domain.usecase.quote.GetQuotesUseCase
 import com.marianaalra.booklog.domain.usecase.quote.UpdateQuoteUseCase
+import com.marianaalra.booklog.data.repository.impl.SerieRepositoryImpl
+import com.marianaalra.booklog.data.repository.impl.ColeccionRepositoryImpl
 
 class BookLogApp : Application() {
 
@@ -52,4 +54,6 @@ class BookLogApp : Application() {
     val addQuoteUseCase by lazy { AddQuoteUseCase(quoteRepository) }
     val updateQuoteUseCase by lazy { UpdateQuoteUseCase(quoteRepository) }
     val deleteQuoteUseCase by lazy { DeleteQuoteUseCase(quoteRepository) }
+    val serieRepository by lazy { SerieRepositoryImpl(database.serieDao()) }
+    val coleccionRepository by lazy { ColeccionRepositoryImpl(database.coleccionDao()) }
 }

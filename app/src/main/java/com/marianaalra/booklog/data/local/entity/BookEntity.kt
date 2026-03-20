@@ -25,6 +25,7 @@ data class BookEntity(
     val titulo: String,
     val formato: String,
     val autor: String?,
+    val serieId: Long? = null,
     val progreso: Float = 0f, // 👈 El que agregamos para tu Slider
     val estado: String = "PENDIENTE",
     val coverPath: String? = null,

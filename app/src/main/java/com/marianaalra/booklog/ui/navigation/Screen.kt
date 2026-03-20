@@ -19,4 +19,8 @@ sealed class Screen(val route: String) {
         fun createRoute(title: String, bookId: Long) =
             "notes/${URLEncoder.encode(title, "UTF-8")}/$bookId"
     }
+    object EditBook : Screen("editbook/{bookId}") {
+        fun createRoute(bookId: Long) = "editbook/$bookId"
+    }
+
 }
