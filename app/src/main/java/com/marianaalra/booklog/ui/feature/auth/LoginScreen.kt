@@ -61,7 +61,8 @@ fun LoginScreen(
 
             OutlinedTextField(
                 value = username,
-                onValueChange = { username = it },
+                onValueChange = { username = it
+                    onErrorShown()},
                 label = { Text("Correo",
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSecondary) },
@@ -82,7 +83,8 @@ fun LoginScreen(
 
             OutlinedTextField(
                 value = password,
-                onValueChange = { password = it },
+                onValueChange = { password = it
+                    onErrorShown()},
                 label = { Text("Contraseña",
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSecondary) },
@@ -107,7 +109,6 @@ fun LoginScreen(
                     color = MaterialTheme.colorScheme.error,
                     style = MaterialTheme.typography.bodySmall
                 )
-                LaunchedEffect(errorMessage) { onErrorShown() }
             }
 
             Button(

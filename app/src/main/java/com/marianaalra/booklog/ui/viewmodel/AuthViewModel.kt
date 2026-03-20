@@ -27,6 +27,7 @@ class AuthViewModel(
             loginUseCase(correo, contrasena)
                 .onSuccess { user ->
                     _currentUser.value = user
+                    _error.value = null // 👈 LIMPIA ERROR
                     onSuccess()
                 }
                 .onFailure { _error.value = it.message }
@@ -38,6 +39,7 @@ class AuthViewModel(
             registerUseCase(nombreUsuario, correo, contrasena)
                 .onSuccess { user ->
                     _currentUser.value = user
+                    _error.value = null // 👈 LIMPIA ERROR
                     onSuccess()
                 }
                 .onFailure { _error.value = it.message }
@@ -48,6 +50,7 @@ class AuthViewModel(
         viewModelScope.launch {
             logoutUseCase()
             _currentUser.value = null
+            _error.value = null // 👈 LIMPIA errores anteriores
             onSuccess()
         }
     }

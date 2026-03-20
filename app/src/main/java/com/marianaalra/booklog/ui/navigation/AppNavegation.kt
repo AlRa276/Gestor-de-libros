@@ -48,6 +48,9 @@ fun AppNavigation() {
 
         composable(Screen.Login.route) {
             val error by authViewModel.error.collectAsState()
+            LaunchedEffect(Unit) {
+                authViewModel.clearError() //  LIMPIA AL ENTRAR
+            }
             LoginScreen(
                 onLoginClick = { correo, contrasena ->
                     authViewModel.login(correo, contrasena) {
@@ -64,6 +67,9 @@ fun AppNavigation() {
 
         composable(Screen.Register.route) {
             val error by authViewModel.error.collectAsState()
+            LaunchedEffect(Unit) {
+                authViewModel.clearError() //  LIMPIA AL ENTRAR
+            }
             RegisterScreen(
                 onRegisterClick = { username, email, password ->
                     authViewModel.register(username, email, password) {
