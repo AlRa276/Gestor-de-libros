@@ -13,14 +13,14 @@ class AuthRepositoryImpl(private val dao: UserDao) : AuthRepository {
 
     override suspend fun login(correo: String, contrasena: String): Result<UserDomain> {
         val userEntity = dao.getUserByEmail(correo)
-            ?: return Result.failure(Exception("El correo no está registrado"))
+            ?: return Result.failure(Exception("Credenciales inválidas"))
 
         // En una app real de producción, aquí se usaría un desencriptador. Por ahora lo validamos directo.
         if (userEntity.hashContrasena == contrasena) {
             currentUser = userEntity.toDomain()
             return Result.success(currentUser!!)
         }
-        return Result.failure(Exception("Contraseña incorrecta"))
+        return Result.failure(Exception("Credenciales inválidas"))
     }
 
     override suspend fun register(nombreUsuario: String, correo: String, contrasena: String): Result<UserDomain> {

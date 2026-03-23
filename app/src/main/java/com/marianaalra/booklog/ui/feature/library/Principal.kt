@@ -165,6 +165,7 @@ fun MainScreenWithDrawer(
                         OutlinedTextField(
                             value = searchQuery,
                             onValueChange = { searchQuery = it },
+                            textStyle = MaterialTheme.typography.bodyMedium,
                             modifier = Modifier.fillMaxWidth().padding(end = 8.dp),
                             placeholder = { Text("Buscar...") },
                             leadingIcon = { Icon(Icons.Default.Search, null) },
