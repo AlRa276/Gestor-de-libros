@@ -80,4 +80,28 @@ class BookViewModel(
             try { updateBookUseCase(book) } catch (e: Exception) { e.printStackTrace() }
         }
     }
+
+    // Estado de navegación interna del drawer
+    private val _selectedSection = MutableStateFlow("Biblioteca")
+    val selectedSection: StateFlow<String> = _selectedSection
+
+    private val _selectedAuthor = MutableStateFlow<String?>(null)
+    val selectedAuthor: StateFlow<String?> = _selectedAuthor
+
+    private val _selectedSerieId = MutableStateFlow<Long?>(null)
+    val selectedSerieId: StateFlow<Long?> = _selectedSerieId
+
+    private val _selectedColeccionId = MutableStateFlow<Long?>(null)
+    val selectedColeccionId: StateFlow<Long?> = _selectedColeccionId
+
+    fun setSelectedSection(section: String) {
+        _selectedSection.value = section
+        _selectedAuthor.value = null
+        _selectedSerieId.value = null
+        _selectedColeccionId.value = null
+    }
+
+    fun setSelectedAuthor(author: String?) { _selectedAuthor.value = author }
+    fun setSelectedSerieId(id: Long?) { _selectedSerieId.value = id }
+    fun setSelectedColeccionId(id: Long?) { _selectedColeccionId.value = id }
 }

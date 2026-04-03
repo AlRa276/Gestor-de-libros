@@ -38,13 +38,13 @@ fun MainScreenWithDrawer(
     val scope = rememberCoroutineScope()
     val context = LocalContext.current
 
-    var selectedItem by remember { mutableStateOf("Biblioteca") }
+    val selectedItem by bookViewModel.selectedSection.collectAsState()
     var searchQuery by remember { mutableStateOf("") }
 
     // Estados para subniveles de navegación
-    var selectedAuthor by remember { mutableStateOf<String?>(null) }
-    var selectedSerieId by remember { mutableStateOf<Long?>(null) }
-    var selectedColeccionId by remember { mutableStateOf<Long?>(null) }
+    val selectedAuthor by bookViewModel.selectedAuthor.collectAsState()
+    val selectedSerieId by bookViewModel.selectedSerieId.collectAsState()
+    val selectedColeccionId by bookViewModel.selectedColeccionId.collectAsState()
 
     val books by bookViewModel.books.collectAsState()
     val series by bookViewModel.series.collectAsState()
@@ -66,9 +66,7 @@ fun MainScreenWithDrawer(
     }
 
     LaunchedEffect(selectedItem) {
-        selectedAuthor = null
-        selectedSerieId = null
-        selectedColeccionId = null
+        searchQuery = ""
     }
 
     val filePickerLauncher = rememberLauncherForActivityResult(
@@ -129,8 +127,7 @@ fun MainScreenWithDrawer(
                             if (label == "Estadísticas") {
                                 onNavigateToStatistics()
                             } else {
-                                selectedItem = label
-                                searchQuery = ""
+                                bookViewModel.setSelectedSection(label)
                             }
                             scope.launch { drawerState.close() }
                         }
@@ -176,9 +173,9 @@ fun MainScreenWithDrawer(
                     navigationIcon = {
                         IconButton(onClick = {
                             when {
-                                selectedAuthor != null -> selectedAuthor = null
-                                selectedSerieId != null -> selectedSerieId = null
-                                selectedColeccionId != null -> selectedColeccionId = null
+                                selectedAuthor != null -> bookViewModel.setSelectedAuthor(null)
+                                selectedSerieId != null -> bookViewModel.setSelectedSerieId(null)
+                                selectedColeccionId != null -> bookViewModel.setSelectedColeccionId(null)
                                 else -> scope.launch { drawerState.open() }
                             }
                         }) {
@@ -216,7 +213,7 @@ fun MainScreenWithDrawer(
                                 ListItem(
                                     headlineContent = { Text(author) },
                                     leadingContent = { Icon(Icons.Default.Person, null) },
-                                    modifier = Modifier.clickable { selectedAuthor = author }
+                                    modifier = Modifier.clickable { bookViewModel.setSelectedAuthor(author) }
                                 )
                                 HorizontalDivider()
                             }
@@ -231,7 +228,7 @@ fun MainScreenWithDrawer(
                                 ListItem(
                                     headlineContent = { Text(serie.nombre) },
                                     leadingContent = { Icon(Icons.Default.LibraryBooks, null) },
-                                    modifier = Modifier.clickable { selectedSerieId = serie.id }
+                                    modifier = Modifier.clickable { bookViewModel.setSelectedSerieId(serie.id) }
                                 )
                                 HorizontalDivider()
                             }
@@ -246,7 +243,7 @@ fun MainScreenWithDrawer(
                                 ListItem(
                                     headlineContent = { Text(col.nombre) },
                                     leadingContent = { Icon(Icons.Default.Label, null) },
-                                    modifier = Modifier.clickable { selectedColeccionId = col.id }
+                                    modifier = Modifier.clickable { bookViewModel.setSelectedColeccionId(col.id) }
                                 )
                                 HorizontalDivider()
                             }
