@@ -10,12 +10,14 @@ object AppDatabase {
 
     fun getInstance(context: Context): BookLogDatabase {
         return INSTANCE ?: synchronized(this) {
-            Room.databaseBuilder(
+            val instance = Room.databaseBuilder(
                 context.applicationContext,
                 BookLogDatabase::class.java,
                 "booklog_database"
             ).fallbackToDestructiveMigration()  // 👈 AGREGA ESTO
                 .build()
+            INSTANCE = instance
+            instance
         }
     }
 }
