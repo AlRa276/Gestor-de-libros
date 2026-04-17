@@ -149,10 +149,19 @@ fun AppNavigation() {
                 bookTitle = title,
                 fileUriString = fileUri,
                 bookId = bookId,
-                currentBook = currentBook,              // 👈 NUEVO
+                onNavigateToEdit = { idDelLibro ->
+                    navController.navigate(Screen.EditBook.route)
+                },
+                onNavigateToNotes = { titulo, idDelLibro ->
+                    navController.navigate(Screen.Notes.route)
+                },
+                onBack = {
+                    navController.popBackStack()
+                },
+                currentBook = currentBook,
                 notesViewModel = notesViewModel,
-                bookViewModel = bookViewModel,          // 👈 NUEVO
-                initialProgress = currentBook?.progress ?: 0f,  // 👈 Carga el progreso real
+                bookViewModel = bookViewModel,
+                initialProgress = currentBook?.progress ?: 0f,
                 onNavigateBack = { navController.popBackStack() },
                 onAddNote = { },
                 onAddCitation = { }

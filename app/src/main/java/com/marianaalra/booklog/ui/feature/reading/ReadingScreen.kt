@@ -1,9 +1,14 @@
 package com.marianaalra.booklog.ui.feature.reading
 
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.Description
+import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.TopAppBar
 import java.io.File
 import androidx.activity.compose.BackHandler
-import java.io.FileOutputStream
-import java.io.InputStream
 import android.os.ParcelFileDescriptor
 import android.graphics.Bitmap
 import android.graphics.pdf.PdfRenderer
@@ -20,9 +25,6 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.outlined.BookmarkBorder
 import androidx.compose.material.icons.outlined.FormatQuote
 import androidx.compose.material.icons.outlined.NoteAdd
 import androidx.compose.material.icons.outlined.Settings
@@ -31,8 +33,6 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
@@ -40,7 +40,6 @@ import androidx.compose.material3.Slider
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
-import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
@@ -70,6 +69,9 @@ fun ReadingScreen(
     bookTitle: String,
     fileUriString: String?,
     bookId: Long = 0L,
+    onNavigateToEdit: (Long) -> Unit,
+    onNavigateToNotes: (String, Long) -> Unit,
+    onBack: () -> Unit,
     currentBook: com.marianaalra.booklog.domain.model.Book? = null,  // 👈
     notesViewModel: NotesViewModel? = null,
     bookViewModel: BookViewModel? = null,                             // 👈
@@ -205,26 +207,34 @@ fun ReadingScreen(
         topBar = {
             TopAppBar(
                 title = {
-                    Text(text = bookTitle, maxLines = 1, overflow = TextOverflow.Ellipsis, style = MaterialTheme.typography.titleMedium)
+                    Text(
+                        text = bookTitle,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                        style = MaterialTheme.typography.titleMedium
+                    )
                 },
                 navigationIcon = {
-                    IconButton(
-                        onClick = {
-                            if (!isNavigatingBack) {
-                                isNavigatingBack = true
-                                currentBook?.let { book ->
-                                    bookViewModel?.updateBook(book.copy(progress = sliderProgress))
-                                }
-                                onNavigateBack()
-                            }
-                        }
-                    ) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, "Regresar")
+                    IconButton(onClick = onBack) {
+                        Icon(Icons.Default.ArrowBack, contentDescription = "Regresar")
                     }
                 },
                 actions = {
-                    IconButton(onClick = { }) { Icon(Icons.Outlined.BookmarkBorder, "Marcador") }
-                    IconButton(onClick = { }) { Icon(Icons.Outlined.Settings, "Configuración") }
+                    // Ícono de Notas
+                    IconButton(onClick = { onNavigateToNotes(bookTitle, bookId) }) {
+                        Icon(
+                            imageVector = Icons.Default.Description, // O Icons.Default.StickyNote2
+                            contentDescription = "Ver notas"
+                        )
+                    }
+
+                    // Ícono de Editar
+                    IconButton(onClick = { onNavigateToEdit(bookId) }) {
+                        Icon(
+                            imageVector = Icons.Default.Edit,
+                            contentDescription = "Editar detalles"
+                        )
+                    }
                 }
             )
         },
