@@ -128,11 +128,11 @@ implementation(libs.gson)
 
 Verificar que en tu IDE puedes importar:
 ```kotlin
-✅ import com.marianaalra.booklog.data.remote.api.RetrofitClient
-✅ import com.marianaalra.booklog.data.repository.impl.AuthRemoteRepositoryImpl
-✅ import com.marianaalra.booklog.data.repository.remote.BookRemoteRepository
-✅ import com.marianaalra.booklog.domain.util.Resource
-✅ import com.marianaalra.booklog.domain.model.Book
+✅ import com.marianaalra.book.data.remote.api.RetrofitClient
+✅ import com.marianaalra.book.data.repository.impl.AuthRemoteRepositoryImpl
+✅ import com.marianaalra.book.data.repository.remote.BookRemoteRepository
+✅ import com.marianaalra.book.domain.util.Resource
+✅ import com.marianaalra.book.domain.model.Book
 ```
 
 - [ ] Todos los imports funcionan sin errores

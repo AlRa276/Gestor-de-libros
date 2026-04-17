@@ -1,4 +1,4 @@
-package com.marianaalra.booklog
+package com.marianaalra.book
 
 import org.junit.Test
 

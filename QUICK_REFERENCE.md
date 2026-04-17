@@ -440,17 +440,17 @@ viewModelScope.launch {
 
 ```kotlin
 // Para usar en tus archivos
-import com.marianaalra.booklog.data.remote.api.RetrofitClient
-import com.marianaalra.booklog.data.repository.impl.AuthRemoteRepositoryImpl
-import com.marianaalra.booklog.data.repository.remote.BookRemoteRepository
-import com.marianaalra.booklog.data.repository.remote.SerieRemoteRepository
-import com.marianaalra.booklog.data.repository.remote.ColeccionRemoteRepository
-import com.marianaalra.booklog.data.repository.remote.NoteRemoteRepository
-import com.marianaalra.booklog.data.repository.remote.QuoteRemoteRepository
-import com.marianaalra.booklog.data.repository.remote.LecturaColeccionRemoteRepository
-import com.marianaalra.booklog.domain.util.Resource
-import com.marianaalra.booklog.domain.model.Book
-import com.marianaalra.booklog.domain.model.UserDomain
+import com.marianaalra.book.data.remote.api.RetrofitClient
+import com.marianaalra.book.data.repository.impl.AuthRemoteRepositoryImpl
+import com.marianaalra.book.data.repository.remote.BookRemoteRepository
+import com.marianaalra.book.data.repository.remote.SerieRemoteRepository
+import com.marianaalra.book.data.repository.remote.ColeccionRemoteRepository
+import com.marianaalra.book.data.repository.remote.NoteRemoteRepository
+import com.marianaalra.book.data.repository.remote.QuoteRemoteRepository
+import com.marianaalra.book.data.repository.remote.LecturaColeccionRemoteRepository
+import com.marianaalra.book.domain.util.Resource
+import com.marianaalra.book.domain.model.Book
+import com.marianaalra.book.domain.model.UserDomain
 import kotlinx.coroutines.launch
 import androidx.lifecycle.viewModelScope
 ```

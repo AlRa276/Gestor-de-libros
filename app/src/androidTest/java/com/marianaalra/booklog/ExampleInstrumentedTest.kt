@@ -1,4 +1,4 @@
-package com.marianaalra.booklog
+package com.marianaalra.book
 
 import androidx.test.platform.app.InstrumentationRegistry
 import androidx.test.ext.junit.runners.AndroidJUnit4
@@ -19,6 +19,6 @@ class ExampleInstrumentedTest {
     fun useAppContext() {
         // Context of the app under test.
         val appContext = InstrumentationRegistry.getInstrumentation().targetContext
-        assertEquals("com.marianaalra.booklog", appContext.packageName)
+        assertEquals("com.marianaalra.book", appContext.packageName)
     }
 }
