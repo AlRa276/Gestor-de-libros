@@ -7,16 +7,16 @@ plugins {
 }
 
 android {
-    namespace = "com.marianaalra.booklog"
+    namespace = "com.marianaalra.book"
     compileSdk  = 36
 
 
     defaultConfig {
-        applicationId = "com.marianaalra.booklog"
+        applicationId = "com.marianaalra.book"
         minSdk = 24
         targetSdk = 36
-        versionCode = 1
-        versionName = "1.0"
+        versionCode = 2
+        versionName = "1.2"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
@@ -58,6 +58,14 @@ dependencies {
     implementation(libs.room.ktx)
     implementation(platform("com.google.firebase:firebase-bom:33.1.0"))
     implementation("com.google.firebase:firebase-messaging-ktx")
+    implementation("androidx.fragment:fragment-ktx:1.8.3")
+    // Retrofit & OkHttp
+    implementation(libs.retrofit)
+    implementation(libs.retrofit.gson)
+    implementation(libs.okhttp)
+    implementation(libs.okhttp.logging)
+    implementation(libs.gson)
+    
     ksp(libs.room.compiler)
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
