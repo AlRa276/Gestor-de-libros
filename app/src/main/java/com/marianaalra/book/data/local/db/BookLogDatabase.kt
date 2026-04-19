@@ -22,9 +22,9 @@ import com.marianaalra.book.data.local.entity.LecturaColeccionEntity
         BookEntity::class,
         NoteEntiny::class,
         QuoteEntiny::class,
-        SerieEntity::class,          // 👈 NUEVO
-        ColeccionEntity::class,      // 👈 NUEVO
-        LecturaColeccionEntity::class // 👈 NUEVO
+        SerieEntity::class,
+        ColeccionEntity::class,
+        LecturaColeccionEntity::class
     ],
     version = 4,   // 👈 sube a 4
     exportSchema = false
@@ -34,6 +34,6 @@ abstract class BookLogDatabase : RoomDatabase() {
     abstract fun bookDao(): BookDao
     abstract fun noteDao(): NoteDao
     abstract fun quoteDao(): QuoteDao
-    abstract fun serieDao(): SerieDao           // 👈 NUEVO
-    abstract fun coleccionDao(): ColeccionDao   // 👈 NUEVO
+    abstract fun serieDao(): SerieDao
+    abstract fun coleccionDao(): ColeccionDao
 }

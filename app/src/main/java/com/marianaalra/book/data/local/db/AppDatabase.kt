@@ -14,7 +14,7 @@ object AppDatabase {
                 context.applicationContext,
                 BookLogDatabase::class.java,
                 "booklog_database"
-            ).fallbackToDestructiveMigration()  // 👈 AGREGA ESTO
+            )//.fallbackToDestructiveMigration()  // 👈 AGREGA ESTO
                 .build()
             INSTANCE = instance
             instance
