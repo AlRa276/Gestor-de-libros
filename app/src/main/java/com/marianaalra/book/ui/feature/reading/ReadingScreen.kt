@@ -1,4 +1,4 @@
-package com.marianaalra.booklog.ui.feature.reading
+package com.marianaalra.book.ui.feature.reading
 
 import java.io.File
 import androidx.activity.compose.BackHandler
@@ -22,6 +22,9 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.Description
+import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.outlined.BookmarkBorder
 import androidx.compose.material.icons.outlined.FormatQuote
 import androidx.compose.material.icons.outlined.NoteAdd
@@ -74,6 +77,8 @@ fun ReadingScreen(
     notesViewModel: NotesViewModel? = null,
     bookViewModel: BookViewModel? = null,                             // 👈
     initialProgress: Float,
+    onNavigateToEdit: (Long) -> Unit,
+    onNavigateToNotes: (String, Long) -> Unit,
     onNavigateBack: () -> Unit,
     onAddNote: () -> Unit,
     onAddCitation: () -> Unit,
@@ -205,26 +210,34 @@ fun ReadingScreen(
         topBar = {
             TopAppBar(
                 title = {
-                    Text(text = bookTitle, maxLines = 1, overflow = TextOverflow.Ellipsis, style = MaterialTheme.typography.titleMedium)
+                    Text(
+                        text = bookTitle,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                        style = MaterialTheme.typography.titleMedium
+                    )
                 },
                 navigationIcon = {
-                    IconButton(
-                        onClick = {
-                            if (!isNavigatingBack) {
-                                isNavigatingBack = true
-                                currentBook?.let { book ->
-                                    bookViewModel?.updateBook(book.copy(progress = sliderProgress))
-                                }
-                                onNavigateBack()
-                            }
-                        }
-                    ) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, "Regresar")
+                    IconButton(onClick = onNavigateBack) {
+                        Icon(Icons.Default.ArrowBack, contentDescription = "Regresar")
                     }
                 },
                 actions = {
-                    IconButton(onClick = { }) { Icon(Icons.Outlined.BookmarkBorder, "Marcador") }
-                    IconButton(onClick = { }) { Icon(Icons.Outlined.Settings, "Configuración") }
+                    // Ícono de Notas
+                    IconButton(onClick = { onNavigateToNotes(bookTitle, bookId) }) {
+                        Icon(
+                            imageVector = Icons.Default.Description, // O Icons.Default.StickyNote2
+                            contentDescription = "Ver notas"
+                        )
+                    }
+
+                    // Ícono de Editar
+                    IconButton(onClick = { onNavigateToEdit(bookId) }) {
+                        Icon(
+                            imageVector = Icons.Default.Edit,
+                            contentDescription = "Editar detalles"
+                        )
+                    }
                 }
             )
         },

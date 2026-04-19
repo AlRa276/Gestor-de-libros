@@ -45,6 +45,7 @@ import com.marianaalra.book.ui.viewmodel.NotesViewModel
 import com.marianaalra.book.ui.viewmodel.StatisticsViewModel
 import com.marianaalra.book.ui.viewmodel.ViewModelFactory
 
+
 @Composable
 fun AppNavigation() {
     val navController = rememberNavController()
@@ -167,14 +168,13 @@ fun AppNavigation() {
                 onNavigateToNotes = { bookTitle, bookId ->
                     navController.navigate(Screen.Notes.createRoute(bookTitle, bookId))
                 },
-                onBack = {
+                onNavigateBack = {
                     navController.popBackStack()
                 },
                 currentBook = currentBook,
                 notesViewModel = notesViewModel,
                 bookViewModel = bookViewModel,
                 initialProgress = currentBook?.progress ?: 0f,
-                onNavigateBack = { navController.popBackStack() },
                 onAddNote = { },
                 onAddCitation = { }
             )
