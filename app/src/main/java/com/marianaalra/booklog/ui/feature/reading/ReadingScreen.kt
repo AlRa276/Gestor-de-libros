@@ -62,6 +62,9 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.navigationBars
+import androidx.compose.foundation.layout.windowInsetsPadding
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -238,8 +241,10 @@ fun ReadingScreen(
                 }
             )
         },
+        contentWindowInsets = WindowInsets(0),
         bottomBar = {
-            Surface(color = MaterialTheme.colorScheme.surfaceVariant, tonalElevation = 3.dp) {
+            Surface(color = MaterialTheme.colorScheme.surfaceVariant, tonalElevation = 3.dp,
+                modifier = Modifier.windowInsetsPadding(WindowInsets.navigationBars)) {
                 Column(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp)) {
                     Row(
                         modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceEvenly, verticalAlignment = Alignment.CenterVertically

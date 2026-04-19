@@ -113,7 +113,7 @@ fun AppNavigation() {
                 onNavigateToNotes = { bookTitle, bookId ->
                     navController.navigate(Screen.Notes.createRoute(bookTitle, bookId))
                 },
-                onNavigateToEdit = { bookId: Long ->    // 👈 AGREGA con tipo explícito
+                onNavigateToEdit = { bookId: Long ->
                     navController.navigate(Screen.EditBook.createRoute(bookId))
                 },
                 onNavigateToStatistics = {
@@ -149,11 +149,11 @@ fun AppNavigation() {
                 bookTitle = title,
                 fileUriString = fileUri,
                 bookId = bookId,
-                onNavigateToEdit = { idDelLibro ->
-                    navController.navigate(Screen.EditBook.route)
+                onNavigateToEdit = { bookId: Long ->
+                    navController.navigate(Screen.EditBook.createRoute(bookId))
                 },
-                onNavigateToNotes = { titulo, idDelLibro ->
-                    navController.navigate(Screen.Notes.route)
+                onNavigateToNotes = { bookTitle, bookId ->
+                    navController.navigate(Screen.Notes.createRoute(bookTitle, bookId))
                 },
                 onBack = {
                     navController.popBackStack()
